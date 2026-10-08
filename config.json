@@ -1,0 +1,296 @@
+{
+ "root": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/images",
+ "fonts": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/fonts",
+ "words": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/work/words.json",
+ "feats": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/work/feats.npz",
+ "title": "أَيَا قَمَرًا",
+ "roles": "كَلِمَات وَأَلْحَان وَتَوْزِيع",
+ "name": "AHMED",
+ "images": {
+  "1": {
+   "file": "1.webp",
+   "moon": [
+    735,
+    175,
+    60
+   ]
+  },
+  "2": {
+   "file": "2.webp",
+   "moon": [
+    737,
+    200,
+    92
+   ]
+  },
+  "3": {
+   "file": "3.webp",
+   "moon": [
+    783,
+    105,
+    48
+   ]
+  },
+  "4": {
+   "file": "4.webp",
+   "moon": [
+    777,
+    180,
+    62
+   ]
+  },
+  "5": {
+   "file": "5.webp",
+   "moon": [
+    722,
+    200,
+    62
+   ]
+  }
+ },
+ "trans": 1.4,
+ "shots": [
+  {
+   "img": "1",
+   "t0": 0,
+   "t1": 28.9,
+   "from": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.52,
+    0.4,
+    1.14
+   ],
+   "text_y": 1520
+  },
+  {
+   "img": "2",
+   "t0": 28.9,
+   "t1": 57.8,
+   "from": [
+    0.5,
+    0.45,
+    1.18
+   ],
+   "to": [
+    0.48,
+    0.5,
+    1.04
+   ],
+   "text_y": 1500
+  },
+  {
+   "img": "3",
+   "t0": 57.8,
+   "t1": 101.2,
+   "from": [
+    0.55,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.62,
+    0.42,
+    1.2
+   ],
+   "text_y": 1520
+  },
+  {
+   "img": "1",
+   "t0": 101.2,
+   "t1": 130.1,
+   "from": [
+    0.5,
+    0.42,
+    1.28
+   ],
+   "to": [
+    0.47,
+    0.4,
+    1.2
+   ],
+   "text_y": 1520
+  },
+  {
+   "img": "5",
+   "t0": 130.1,
+   "t1": 146.1,
+   "from": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.56,
+    0.42,
+    1.18
+   ],
+   "text_y": 1520,
+   "tstyle": "bloom"
+  },
+  {
+   "img": "4",
+   "t0": 146.1,
+   "t1": 161.0,
+   "from": [
+    0.5,
+    0.5,
+    1.15
+   ],
+   "to": [
+    0.5,
+    0.55,
+    1.0
+   ],
+   "text_y": 1560,
+   "tstyle": "bloom"
+  },
+  {
+   "img": "1",
+   "t0": 161.0,
+   "t1": 181.3,
+   "from": [
+    0.52,
+    0.42,
+    1.2
+   ],
+   "to": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "text_y": 1520
+  }
+ ],
+ "opening": {
+  "t0": 1.0,
+  "t1": 14.4,
+  "y": 1310,
+  "emerge": 2.5
+ },
+ "ending": {
+  "t0": 177.2,
+  "t1": 181.3,
+  "y": 1100
+ },
+ "watermark": {
+  "y": 960,
+  "alpha": 0.55
+ },
+ "lines": [
+  {
+   "key": 1,
+   "sticker": "crescent",
+   "side": "right"
+  },
+  {
+   "key": 0,
+   "sticker": "heart",
+   "side": "right"
+  },
+  {
+   "key": 1,
+   "sticker": "sparkles",
+   "side": "left"
+  },
+  {
+   "key": 3,
+   "sticker": "heart_arrow",
+   "side": "left"
+  },
+  {
+   "key": 4,
+   "sticker": "star",
+   "side": "left"
+  },
+  {
+   "key": 4,
+   "sticker": "rose",
+   "side": "left"
+  },
+  {
+   "key": 2,
+   "sticker": "eye",
+   "side": "right"
+  },
+  {
+   "key": 1,
+   "sticker": "heartbeat",
+   "side": "right"
+  },
+  {
+   "key": 0,
+   "sticker": "sparkles",
+   "side": "right"
+  },
+  {
+   "key": 2,
+   "sticker": "star",
+   "side": "left"
+  },
+  {
+   "key": 4,
+   "sticker": "flower",
+   "side": "left"
+  },
+  {
+   "key": 4,
+   "sticker": "sun",
+   "side": "left"
+  },
+  {
+   "key": 2,
+   "sticker": null,
+   "side": "left"
+  },
+  {
+   "key": 2,
+   "sticker": null,
+   "side": "left"
+  },
+  {
+   "key": 4,
+   "sticker": "heartbeat",
+   "side": "left"
+  },
+  {
+   "key": 1,
+   "sticker": "drops",
+   "side": "right"
+  },
+  {
+   "key": 4,
+   "sticker": "eye",
+   "side": "left"
+  },
+  {
+   "key": 3,
+   "sticker": "heart_arrow",
+   "side": "left"
+  },
+  {
+   "key": 1,
+   "sticker": "heart",
+   "side": "right"
+  },
+  {
+   "key": 4,
+   "sticker": "infinity",
+   "side": "left"
+  },
+  {
+   "key": 1,
+   "sticker": "crescent",
+   "side": "right"
+  },
+  {
+   "key": 0,
+   "sticker": "music_note",
+   "side": "right",
+   "hold": 0.5
+  }
+ ]
+}
