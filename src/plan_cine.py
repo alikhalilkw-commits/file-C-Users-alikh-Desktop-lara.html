@@ -25,8 +25,8 @@ IMAGES = {
 # line numbering follows the lyrics file (28 sung lines)
 LINES = [
     # Verse 1: calm and tender
-    ("9", (0.55, 0.50, 1.10), (0.70, 0.62, 1.50), "smooth", 0.3, 3, "phone", "right"),
-    ("9", (0.52, 0.50, 1.30), (0.52, 0.56, 1.52), "smooth", 1.0, 2, "heartbeat", "left"),
+    ("9", (0.55, 0.48, 1.10), (0.66, 0.55, 1.40), "smooth", 0.3, 3, "phone", "right"),
+    ("9", (0.52, 0.42, 1.28), (0.52, 0.46, 1.45), "smooth", 1.0, 2, "heartbeat", "left"),
     ("7", (0.50, 0.33, 1.52), (0.55, 0.42, 1.12), "smooth", 0.4, 1, "ring", "right"),
     ("9", (0.60, 0.46, 1.25), (0.78, 0.13, 1.38), "smooth", 0.2, 3, "heart", "left"),
     # Pre-Chorus: rising
@@ -40,9 +40,9 @@ LINES = [
     ("9", (0.52, 0.45, 1.52), (0.50, 0.50, 1.10), "out", 0.3, 3, "drops", "left"),
     # Verse 2
     ("6", (0.50, 0.45, 1.10), (0.55, 0.34, 1.46), "smooth", 0.3, 1, "strings", "right"),
-    ("6", (0.55, 0.40, 1.40), (0.45, 0.62, 1.36), "smooth", 0.8, 1, "heart", "left"),
+    ("6", (0.53, 0.44, 1.30), (0.48, 0.55, 1.28), "smooth", 0.8, 1, "heart", "left"),
     ("7", (0.52, 0.38, 1.20), (0.50, 0.30, 1.62), "in", 0.3, 3, "heartbeat", "right"),
-    ("6", (0.93, 0.60, 1.55), (0.56, 0.38, 1.30), "smooth", 0.3, 4, "candle", "left"),
+    ("6", (0.90, 0.60, 1.50), (0.56, 0.43, 1.24), "smooth", 0.3, 4, "candle", "left"),
     # Chorus
     ("8", (0.50, 0.50, 1.00), (0.48, 0.28, 1.52), "in", 0.2, 0, "heart", "right"),
     ("8", (0.45, 0.36, 1.36), (0.76, 0.12, 1.52), "smooth", 0.0, 4, "sparkles", "left"),
@@ -53,7 +53,7 @@ LINES = [
     ("7", (0.52, 0.36, 1.30), (0.62, 0.30, 1.20), "linear", 0.8, 3, None, "left"),
     # Final Chorus: strongest
     ("8", (0.50, 0.52, 1.00), (0.48, 0.26, 1.68), "in", 0.2, 0, "heart", "right"),
-    ("9", (0.55, 0.40, 1.22), (0.52, 0.30, 1.62), "smooth", 0.3, 4, "star", "left"),
+    ("9", (0.54, 0.42, 1.20), (0.52, 0.37, 1.50), "smooth", 0.3, 4, "star", "left"),
     ("8", (0.34, 0.45, 1.34), (0.64, 0.40, 1.34), "smooth", 0.0, 3, "flower", "right"),
     ("8", (0.48, 0.28, 1.70), (0.50, 0.50, 1.00), "out", 0.0, 0, "infinity", "left"),
     # Outro: soft, slow
@@ -68,8 +68,16 @@ def snap(t, beats, window=0.45):
     return float(beats[i]) if d[i] <= window else t
 
 
+SLOW = 0.7  # camera travel kept to 70% of the designed move (slower, calmer camera)
+
+
+def slow(frm, to, k=SLOW):
+    mid = [(a + b) / 2 for a, b in zip(frm, to)]
+    return [m + (a - m) * k for m, a in zip(mid, frm)], [m + (b - m) * k for m, b in zip(mid, to)]
+
+
 def par_for(frm, to, inten):
-    a = 6 + 16 * inten
+    a = (6 + 16 * inten) * 0.75
     dx, dy = to[0] - frm[0], to[1] - frm[1]
     n = math.hypot(dx, dy)
     if n > 0.02:
@@ -108,6 +116,7 @@ def main(words_path, feats_path, out_path, assets):
     ]
     shots = []
     for sh in intro:
+        sh["from"], sh["to"] = slow(sh["from"], sh["to"], 0.85)
         sh["par"], sh["rad"] = par_for(sh["from"], sh["to"], sh["intensity"])
         shots.append(sh)
     lines_cfg = []
@@ -115,6 +124,8 @@ def main(words_path, feats_path, out_path, assets):
         t0, t1 = bounds[k + 2], bounds[k + 3]
         sec = secs[k]
         inten = INTENSITY[sec]
+        frm, to = slow(frm, to)
+        drift *= 0.6
         par, rad = par_for(frm, to, inten)
         nxt_img = LINES[k + 1][0] if k + 1 < len(LINES) else None
         nxt_sec = secs[k + 1] if k + 1 < len(secs) else None

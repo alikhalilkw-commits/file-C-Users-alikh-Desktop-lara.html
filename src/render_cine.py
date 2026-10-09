@@ -133,7 +133,7 @@ class CineVideo(R.Video):
         a, b = sh["from"], sh["to"]
         cx, cy, z = (a[i] + (b[i] - a[i]) * u for i in range(3))
         e = self.E(t)
-        z *= 1 + (0.003 + 0.011 * e) * self.beat_pulse(t)
+        z *= 1 + (0.002 + 0.006 * e) * self.beat_pulse(t)
         dr = sh.get("drift", 0.0)
         if dr:
             cx += 0.0028 * dr * (math.sin(t * 1.7) + 0.6 * math.sin(t * 2.9 + 1))

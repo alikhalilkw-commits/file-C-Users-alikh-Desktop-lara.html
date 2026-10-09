@@ -97,6 +97,9 @@ class Sprite:
         self.sh_large = np.clip(cv2.GaussianBlur(m, (0, 0), 14) * 1.6, 0, 1)
         self.glow = np.clip(cv2.GaussianBlur(m, (0, 0), 9) * 1.4, 0, 1)
         self.h, self.w = m.shape
+        cols = np.where(m.max(0) > 0.04)[0]
+        self.ink_l = int(cols[0]) if len(cols) else pad
+        self.ink_w = float(cols[-1] - cols[0] + 1) if len(cols) else adv
 
 
 def blend(frame, layer, x, y, color, alpha, mode="over"):
@@ -214,15 +217,15 @@ class Video:
                     sp = Sprite(w["text"], self.fonts.get("messiri", int(size * scale)))
                 sprites.append(sp)
             space = self.fonts.get("messiri", int(size * scale)).getlength(" ") * 1.15
-            total = sum(s.adv for s in sprites) + space * (len(sprites) - 1)
-            if total <= 900:
+            total = sum(s.ink_w for s in sprites) + space * (len(sprites) - 1)
+            if total <= 880:
                 break
-            scale *= 900 / total * 0.98
+            scale *= 880 / total * 0.98
         line["sprites"], line["width"] = sprites, total
         x = W / 2 + total / 2
         xs = []
         for sp in sprites:
-            x -= sp.adv
+            x -= sp.ink_w
             xs.append(x)
             x -= space
         line["xs"] = xs
@@ -253,7 +256,7 @@ class Video:
                 else:
                     g = ramp(t, appear, appear + 0.12) * (1 - smooth(ramp(t, w["end"] + 0.05, w["end"] + 0.45)))
                 col = IVORY * (1 - g) + GOLD * g
-                X = int(round(x)) - sp.pad
+                X = int(round(x)) - sp.ink_l
                 Y = by - sp.base + dy
                 blend(fr, sp.sh_large, X, Y + 4, DARK, 0.55 * a)
                 blend(fr, sp.sh_small, X + 1, Y + 3, DARK, 0.75 * a)
