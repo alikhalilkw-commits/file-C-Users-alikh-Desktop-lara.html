@@ -134,7 +134,40 @@ def quill():
     return [vane, vane2, shaft, nib]
 
 
-CATALOGUE = dict(quill=quill, crescent=crescent, heart=heart, heart_arrow=heart_arrow, sparkles=sparkles, star=star,
+def _rrect(hw, hh, r, n=8):
+    pts = []
+    for cx, cy, a0 in ((hw - r, -hh + r, -90), (hw - r, hh - r, 0), (-hw + r, hh - r, 90), (-hw + r, -hh + r, 180)):
+        pts += _arc(cx, cy, r, math.radians(a0), math.radians(a0 + 90), n)
+    return pts + [pts[0]]
+
+
+def phone():
+    body = _rrect(0.42, 0.88, 0.14)
+    screen = [(-0.3, -0.62), (0.3, -0.62), (0.3, 0.55), (-0.3, 0.55), (-0.3, -0.62)]
+    home = _arc(0, 0.72, 0.07, 0, 2 * math.pi, 16)
+    waves = [_arc(0.5, -0.7, r, math.radians(-85), math.radians(5), 14) for r in (0.28, 0.5)]
+    return [body, screen, home] + waves
+
+
+def ring():
+    dot = _arc(0, 0, 0.14, 0, 2 * math.pi, 20)
+    out = [dot]
+    for r in (0.42, 0.7, 0.98):
+        out.append(_arc(0, 0, r, math.radians(-42), math.radians(42), 18))
+        out.append(_arc(0, 0, r, math.radians(138), math.radians(222), 18))
+    return out
+
+
+def candle():
+    body = [(-0.28, 0.0), (-0.28, 0.9), (0.28, 0.9), (0.28, 0.0)]
+    top = _arc(0, 0.0, 0.28, math.radians(180), math.radians(360), 14)
+    wick = [(0, -0.05), (0, -0.2)]
+    flame = [(0, -0.28)] + [(0.2 * math.sin(t), -0.28 - 0.5 * math.sin(t / 2) ** 0.9 * 1.0 + 0.0) for t in np.linspace(0, math.pi, 1)]
+    fl = [(0, -0.95), (0.17, -0.62), (0.12, -0.38), (0, -0.3), (-0.12, -0.38), (-0.17, -0.62), (0, -0.95)]
+    return [body, top, wick, fl]
+
+
+CATALOGUE = dict(phone=phone, ring=ring, candle=candle, quill=quill, crescent=crescent, heart=heart, heart_arrow=heart_arrow, sparkles=sparkles, star=star,
                  sun=sun, flower=flower, rose=rose, drops=drops, music_note=music_note, strings=strings,
                  eye=eye, infinity=infinity, heartbeat=heartbeat)
 

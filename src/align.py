@@ -124,7 +124,7 @@ def main(model_dir, wav, lyrics, out):
     ids, owner, words = [], [], []
     for li, (sec, text) in enumerate(lines):
         for wi, word in enumerate(text.split()):
-            plain = DIAC.sub("", word)
+            plain = re.sub(r"[^\u0621-\u064A]", "", DIAC.sub("", word))
             chars = [toks[c] for c in plain if c in toks]
             words.append(dict(section=sec, line=li, word=wi, text=word))
             for c in chars:

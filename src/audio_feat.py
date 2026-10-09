@@ -29,6 +29,29 @@ def decay(v, k):
     return out
 
 
+def beat_times(onset, fps, lo=60, hi=150):
+    """Tempo by autocorrelation, phase by grid energy, each beat snapped to the nearest onset peak."""
+    o = onset - uniform_filter1d(onset, fps)
+    o = np.maximum(o, 0)
+    ac = np.correlate(o, o, "full")[len(o) - 1:]
+    lags = np.arange(int(fps * 60 / hi), int(fps * 60 / lo) + 1)
+    sc = ac[lags] * (1 - 0.15 * np.abs(np.log2(lags / (fps * 60 / 100))))
+    period = lags[int(np.argmax(sc))]
+    best, phase = -1, 0
+    for ph in range(period):
+        v = o[ph::period].sum()
+        if v > best:
+            best, phase = v, ph
+    beats, t = [], float(phase)
+    while t < len(o) - 1:
+        i = int(round(t))
+        w = o[max(0, i - 2):i + 3]
+        j = max(0, i - 2) + int(np.argmax(w)) if w.max() > 0 else i
+        beats.append(j / fps)
+        t += period
+    return np.array(beats, np.float32)
+
+
 def features(x, sr, fps=30):
     hop = sr // fps
     n = len(x) // hop
@@ -50,7 +73,8 @@ def features(x, sr, fps=30):
 
     band = (freqs > 300) & (freqs < 3400)
     vocal = norm(uniform_filter1d(spec[:, band].mean(1), fps // 3))
-    return dict(kick=kick, spark=spark, loud=loud, vocal=vocal, fps=fps)
+    beats = beat_times(np.maximum(flux_low * 2 + flux, 0), fps)
+    return dict(kick=kick, spark=spark, loud=loud, vocal=vocal, fps=fps, beats=beats)
 
 
 if __name__ == "__main__":
@@ -58,4 +82,4 @@ if __name__ == "__main__":
     fps = int(sys.argv[3]) if len(sys.argv) > 3 else 30
     f = features(x, sr, fps)
     np.savez(sys.argv[2], **f)
-    print("frames", len(f["kick"]))
+    print("frames", len(f["kick"]), "beats", len(f["beats"]), "bpm", round(60 / np.median(np.diff(f["beats"])), 1))
