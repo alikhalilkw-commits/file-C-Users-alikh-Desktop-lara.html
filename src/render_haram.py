@@ -269,6 +269,10 @@ class Video:
         self.end_credit_ar = R.Sprite(c["credit_ar"], f("messiri", 36))
         self.end_credit_name = R.Sprite("AHMED", f("cinzel", 52), tracking=12, rtl=False)
         self.pledge = R.Sprite(c["opening"]["pledge"], f("messiri", 50)) if c["opening"].get("pledge") else None
+        if c["opening"].get("card"):
+            self.card_title = R.Sprite(c["title"], f("kufi", 96))
+            self.card_sa = haram_assets.WavingFlag(c["flag_sa"], 190)
+            self.card_eg = haram_assets.WavingFlag(c["flag_eg"], 190)
 
     def put(self, fr, sp, cx, base, a, color, glow=0.0, shadow=True):
         X = int(round(cx - sp.adv / 2)) - sp.pad
@@ -397,6 +401,11 @@ class Video:
             fr *= 1 - 0.9 * fb
         # opening title (also the timed caption of the first sung line)
         op = c["opening"]
+        if op.get("card"):
+            k = 1 - smooth(ramp(t, op["card_end"], op["card_end"] + op["card_fade"]))
+            if k > 0:
+                fr *= 1 - k
+                self.intro_card(fr, t, op, k)
         for line in self.lines:
             if line["title"]:
                 self.draw_title(fr, t, line, op)
@@ -414,7 +423,8 @@ class Video:
 
     def draw_title(self, fr, t, line, op):
         """Title reveal over the moving Haram; becomes the first lyric panel when the voice enters."""
-        a_in = ease_out(ramp(t, op["t0"], op["t0"] + 1.4))
+        card = op.get("card", False)
+        a_in = ease_out(ramp(t, line["t_in"], line["t_in"] + 0.45)) if card else ease_out(ramp(t, op["t0"], op["t0"] + 1.4))
         a_out = 1 - smooth(ramp(t, line["t_out"] - 0.35, line["t_out"]))
         a = a_in * a_out
         if a <= 0.003:
@@ -439,6 +449,9 @@ class Video:
             blend(fr, sp.mask, X, Y, IVORY * (1 - g) + GOLD * g, a)
             if i == 0:
                 pass
+        if card:
+            line["y"] = saved
+            return
         # light sweep across the whole title once
         s = ramp(t, op["t0"] + 1.0, op["t0"] + 2.6)
         if 0 < s < 1:
@@ -491,6 +504,49 @@ class Video:
         if p < 1:
             lead = np.exp(-((xx - edge) / 14) ** 2)[None, :]
             blend(fr, sp.glow * lead, X, Y, np.array([1, 0.92, 0.7], np.float32), 0.9 * a, "add")
+
+    def intro_card(self, fr, t, op, k):
+        """Black opening card: title descends and writes on, official flags beside gold clasped hands,
+        the pledge line, then the credits (AHMED) as before."""
+        y = op["card_title_y"]
+        d = ease_out(ramp(t, 0.3, 2.1))
+        p = smooth(ramp(t, 0.4, 2.0))
+        X0 = int(round(W / 2 - self.card_title.adv / 2)) - self.card_title.pad
+        ty = y - 130 * (1 - d)
+        self.write_on(fr, self.card_title, W / 2, ty, p, k * smooth(ramp(t, 0.3, 0.8)), GOLD, glow=0.4)
+        if t > 2.1:
+            self.sweep(fr, self.card_title, X0, int(round(ty - self.card_title.base)), ramp(t, 2.1, 3.2), k)
+        # flags slide in gently from the sides, hands drawn between them
+        fa = ease_out(ramp(t, 1.8, 2.9)) * k
+        fy = op["card_flags_y"]
+        for j, fl in enumerate((self.card_sa, self.card_eg)):
+            rgb, al = fl.frame(t + j * 0.37, amp=0.45)
+            slide = (1 - ease_out(ramp(t, 1.8, 2.9))) * 120
+            x = int(80 - slide) if j == 0 else int(W - 80 - fl.w + slide)
+            yy = fy - fl.h // 2 - fl.pad
+            blend(fr, cv2.GaussianBlur(al, (0, 0), 10), x + 10, yy + 12, DARK, 0.5 * fa)
+            h, w = al.shape
+            x0c, x1c = max(0, x), min(W, x + w)
+            reg = fr[yy:yy + h, x0c:x1c]
+            alc = al[:reg.shape[0], x0c - x:x1c - x, None] * fa
+            reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], x0c - x:x1c - x] * alc
+        prog = ramp(t, 2.2, 3.4)
+        if prog > 0:
+            core, glow, halo = stickers.draw("handshake", prog, 92)
+            X, Y = int(W / 2 - core.shape[1] / 2), int(fy - core.shape[0] / 2)
+            blend(fr, glow, X, Y, GOLD, 0.9 * k, "add")
+            blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, k)
+        # pledge, written on in gold
+        if self.pledge is not None:
+            self.write_on(fr, self.pledge, W / 2, op["card_pledge_y"], smooth(ramp(t, 3.3, 4.8)),
+                          k * ease_out(ramp(t, 3.2, 3.7)), GOLD, glow=0.25)
+        # credits: same entrance as before (roles line, then AHMED with a light sweep)
+        cy = op["card_credit_y"]
+        ca = ease_out(ramp(t, 4.6, 5.4)) * k
+        self.put(fr, self.credit_ar, W / 2, cy + 12 * (1 - ca / max(k, 1e-3)), ca, IVORY)
+        cn = ease_out(ramp(t, 5.1, 5.9)) * k
+        X2, Y2 = self.put(fr, self.credit_name, W / 2, cy + 78 + 12 * (1 - cn / max(k, 1e-3)), cn, GOLD, glow=0.25)
+        self.sweep(fr, self.credit_name, X2, Y2, ramp(t, 5.9, 6.9), cn)
 
     def ending(self, fr, t, en):
         w0 = en["write0"]
