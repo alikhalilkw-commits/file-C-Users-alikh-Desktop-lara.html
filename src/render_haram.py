@@ -273,6 +273,14 @@ class Video:
         for path in c.get("gulf_flags", []):
             g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
             self.card_gulf.append(cv2.resize(g, (96, 72), interpolation=cv2.INTER_AREA))
+        self.end_sa = haram_assets.WavingFlag(c["flag_sa"], 150)
+        self.embrace_rows = []
+        for row in c.get("embrace_rows", []):
+            imgs = []
+            for path in row:
+                g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
+                imgs.append(cv2.resize(g, (70, 52), interpolation=cv2.INTER_AREA))
+            self.embrace_rows.append(imgs)
         self.arab_flags = []
         for path in c.get("arab_flags", []):
             g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
@@ -575,6 +583,89 @@ class Video:
             cv2.rectangle(fm, (0, 0), (tw + 3, th + 3), 1.0, 2)
             blend(fr, fm, x - 2, y - 2, GOLD, 0.7 * ga)
 
+    def embrace_geometry(self, en):
+        """Two gold arms leaving the Saudi flag and wrapping around the Arab flags, meeting in clasped hands."""
+        top = en["sa_y"] + self.end_sa.h // 2
+        hx = self.end_sa.w // 2 - 12
+        by = en["hands_y"]
+        ctrl = [(540 - hx, top), (330, top + 18), (190, top + 95), (165, top + 200),
+                (225, top + 285), (370, by - 30), (500, by - 4)]
+        pts = np.array(ctrl, np.float32)
+        # Catmull-Rom through the control points
+        P = np.vstack([pts[0], pts, pts[-1]])
+        out = []
+        for k in range(1, len(P) - 2):
+            for u in np.linspace(0, 1, 40, endpoint=False):
+                p0, p1, p2, p3 = P[k - 1], P[k], P[k + 1], P[k + 2]
+                out.append(0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u
+                                  + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3))
+        out.append(pts[-1])
+        left = np.array(out, np.float32)
+        right = left.copy()
+        right[:, 0] = W - right[:, 0]
+        seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(left, axis=0), axis=1))]
+        return left, right, seg / seg[-1]
+
+    def embrace(self, fr, t, w0, en):
+        if not hasattr(self, "_emb"):
+            self._emb = self.embrace_geometry(en)
+        left, right, frac = self._emb
+        # Saudi flag at the heart of the composition
+        fa = ease_out(ramp(t, w0 + 0.9, w0 + 1.7))
+        if fa > 0:
+            rgb, al = self.end_sa.frame(t, amp=0.5)
+            x = int(W / 2 - self.end_sa.w / 2)
+            y = int(en["sa_y"] - self.end_sa.h / 2 - self.end_sa.pad + 14 * (1 - fa))
+            blend(fr, cv2.GaussianBlur(al, (0, 0), 10), x + 10, y + 12, DARK, 0.5 * fa)
+            h, w = al.shape
+            reg = fr[y:y + h, x:x + w]
+            alc = al[:reg.shape[0], :reg.shape[1], None] * fa
+            reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], :reg.shape[1]] * alc
+        # arms drawn from the flag downwards
+        p = smooth(ramp(t, w0 + 1.5, w0 + 2.9))
+        if p > 0:
+            n = max(2, int(np.searchsorted(frac, p)))
+            y0, y1 = int(en["sa_y"]), int(en["hands_y"] + 40)
+            m = np.zeros((y1 - y0 + 60, W), np.float32)
+            for arm in (left, right):
+                pts = arm[:n].copy()
+                pts[:, 1] -= y0 - 30
+                cv2.polylines(m, [np.round(pts * 4).astype(np.int32)], False, 1.0, 4, cv2.LINE_AA, shift=2)
+            glow = np.clip(cv2.GaussianBlur(m, (0, 0), 8) * 3.0, 0, 1)
+            blend(fr, glow, 0, y0 - 30, GOLD, 0.75, "add")
+            blend(fr, m, 0, y0 - 30, GOLD * 0.75 + IVORY * 0.25, 1.0)
+        # clasped hands where the arms meet
+        hp = ramp(t, w0 + 2.7, w0 + 3.5)
+        if hp > 0:
+            core, glow, halo = stickers.draw("handshake", hp, 46)
+            X, Y = int(W / 2 - core.shape[1] / 2), int(en["hands_y"] - core.shape[0] / 2)
+            blend(fr, halo, X, Y, DARK, 0.5)
+            blend(fr, glow, X, Y, GOLD, 0.9, "add")
+            blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, 1.0)
+        # the Arab flags gathered inside the embrace, appearing from the centre outwards
+        k = 0
+        for r, (row, ry) in enumerate(zip(self.embrace_rows, en["rows_y"])):
+            nrow = len(row)
+            tw, th, gap = 70, 52, 12
+            total = nrow * tw + (nrow - 1) * gap
+            for j, img in enumerate(row):
+                x = int(W / 2 + total / 2 - (j + 1) * tw - j * gap)
+                dist = abs((x + tw / 2) - W / 2) / (total / 2 + 1)
+                st = w0 + 2.0 + 0.25 * r + 0.5 * dist
+                ga = ease_out(ramp(t, st, st + 0.45))
+                if ga <= 0:
+                    continue
+                y = int(ry - th / 2 + 10 * (1 - ga))
+                sh = np.zeros((th + 40, tw + 40), np.float32)
+                sh[20:20 + th, 20:20 + tw] = 1
+                blend(fr, cv2.GaussianBlur(sh, (0, 0), 7), x - 14, y - 12, DARK, 0.5 * ga)
+                reg = fr[y:y + th, x:x + tw]
+                reg[:] = reg * (1 - ga) + img[:reg.shape[0], :reg.shape[1]] * ga
+                fm = np.zeros((th + 4, tw + 4), np.float32)
+                cv2.rectangle(fm, (0, 0), (tw + 3, th + 3), 1.0, 2)
+                blend(fr, fm, x - 2, y - 2, GOLD, 0.7 * ga)
+                k += 1
+
     def ending(self, fr, t, en):
         w0 = en["write0"]
         # headline descends slowly while it is written, settling like a seal
@@ -586,20 +677,7 @@ class Video:
             X = int(round(W / 2 - self.end_head.adv / 2)) - self.end_head.pad
             Y = int(round(y - self.end_head.base))
             self.sweep(fr, self.end_head, X, Y, ramp(t, w0 + 2.0, w0 + 3.2), 1.0)
-        # gold clasped hands drawn by stroke
-        prog = ramp(t, w0 + 1.6, w0 + 2.9)
-        if prog > 0:
-            core, glow, halo = stickers.draw("handshake", prog, 118)
-            X, Y = int(W / 2 - core.shape[1] / 2), int(en["hands_y"] - core.shape[0] / 2)
-            blend(fr, halo, X, Y, DARK, 0.45)
-            blend(fr, glow, X, Y, GOLD, 0.9, "add")
-            blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, 1.0)
-        if self.card_gulf:
-            self.flag_row(fr, t, w0 + 2.3, self.card_gulf, en["gulf_y"], 96, 72, 26)
-        if self.arab_flags:
-            half = (len(self.arab_flags) + 1) // 2
-            self.flag_row(fr, t, w0 + 2.7, self.arab_flags[:half], en["arab_y"], 78, 58, 16)
-            self.flag_row(fr, t, w0 + 3.0, self.arab_flags[half:], en["arab_y"] + 78, 78, 58, 16)
+        self.embrace(fr, t, w0, en)
         # message, written line by line on a dark panel
         if not hasattr(self, "_mpanel"):
             self._mpanel = rounded_panel(900, 200, r=32)

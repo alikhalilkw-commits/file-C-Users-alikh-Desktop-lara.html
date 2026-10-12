@@ -660,7 +660,36 @@
   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/bh_4x3.png",
   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/om_4x3.png"
  ],
- "arab_flags": [
+ "embrace_rows": [
+  [
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/eg_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/kw_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ae_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/qa_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/bh_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/om_4x3.png"
+  ],
+  [
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/jo_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/iq_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/sy_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/lb_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ps_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ye_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/sd_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ly_4x3.png"
+  ],
+  [
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/tn_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/dz_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ma_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/mr_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/so_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/dj_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/km_4x3.png"
+  ]
+ ],
+ "arab_flags_unused": [
   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/jo_4x3.png",
   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/iq_4x3.png",
   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/sy_4x3.png",
@@ -681,10 +710,14 @@
   "t0": 104.833,
   "write0": 105.333,
   "black": 111.433,
-  "head_y": 330,
-  "hands_y": 520,
-  "gulf_y": 670,
-  "arab_y": 772,
+  "head_y": 320,
+  "sa_y": 470,
+  "rows_y": [
+   610,
+   678,
+   746
+  ],
+  "hands_y": 880,
   "msg_y": 1110,
   "credit_y": 1300
  },
