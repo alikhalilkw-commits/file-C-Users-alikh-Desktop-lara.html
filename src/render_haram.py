@@ -681,12 +681,17 @@ class Video:
         if p > 0:
             y0 = 250
             hgt = 840
-            m = embrace_art.heart_mask(cx, en["heart_cy"], 32.0, 26.0, p, W, y0, hgt)
-            rgb, al = embrace_art.gold_metal(m)
-            blend(fr, cv2.GaussianBlur(al, (0, 0), 12), 10, y0 + 16, DARK, 0.6)
-            blend(fr, cv2.GaussianBlur(al, (0, 0), 16), 0, y0, GOLD, 0.45, "add")
-            reg = fr[y0:y0 + hgt]
-            reg[:] = reg * (1 - al[..., None]) + rgb * al[..., None]
+            # luminous light heart: white-hot core, gold glow in three widths, gentle pulse
+            core = embrace_art.heart_mask(cx, en["heart_cy"], 32.0, 26.0, p, W, y0, hgt, width=9)
+            band = embrace_art.heart_mask(cx, en["heart_cy"], 32.0, 26.0, p, W, y0, hgt, width=22)
+            pulse = 0.85 + 0.15 * math.sin(t * 3.2)
+            g1 = np.clip(cv2.GaussianBlur(band, (0, 0), 6) * 1.6, 0, 1)
+            g2 = np.clip(cv2.GaussianBlur(band, (0, 0), 18) * 2.0, 0, 1)
+            g3 = np.clip(cv2.GaussianBlur(band, (0, 0), 45) * 2.4, 0, 1)
+            blend(fr, g3, 0, y0, GOLD, 0.45 * pulse, "add")
+            blend(fr, g2, 0, y0, GOLD, 0.7 * pulse, "add")
+            blend(fr, g1, 0, y0, np.array([1.0, 0.88, 0.6], np.float32), 0.85, "add")
+            blend(fr, core, 0, y0, np.array([1.0, 0.98, 0.92], np.float32), 1.0)
             done = t - (w0 + 3.6)
             if done > 0:
                 beat = math.exp(-done / 0.45)
