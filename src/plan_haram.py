@@ -62,6 +62,20 @@ LINES = [
     ("L28", [("N01", (0.52, 0.55, 1.00), (0.52, 0.62, 1.25), 0, {})], 1530, None, ("dissolve", 0.8)),
 ]
 
+# Promote-safe cut: no portraits of public figures (TikTok ads reject political figures and AI depictions of them)
+PROMO = {
+    "L07": ("L07", [("N03", (0.55, 0.55, 1.45), (0.57, 0.30, 1.55), 0, {})], LOW, "palm_swords", ("dissolve", 0.6)),
+    "L08": ("L08", [("N01", (0.50, 0.22, 1.60), (0.50, 0.30, 1.40), 0, {})], LOW, "star8", ("dissolve", 0.5)),
+    "L09": ("L09", [("H02", (0.62, 0.45, 1.06), (0.60, 0.41, 1.14), 0, {"warm": True})], LOW, "kaaba", ("dissolve", 0.6)),
+    "L10": ("L10", [("H03", (0.50, 0.50, 1.25), (0.50, 0.52, 1.10), 5, {}),
+                    ("H01", (0.48, 0.55, 1.36), (0.48, 0.53, 1.42), 0, {"cut_word": 2})], LOW, "kaaba", ("dissolve", 0.5)),
+    "L21": ("L21", [("N03", (0.56, 0.40, 1.40), (0.57, 0.30, 1.60), 0, {})], LOW, "star8", ("dissolve", 0.5)),
+    "L26": ("L26", [("R01", (0.60, 0.30, 1.30), (0.60, 0.40, 1.12), 6, {"warm": True})], LOW, "kingdom", ("dissolve", 0.6)),
+    "L27": ("L27", [("H03", (0.50, 0.55, 1.05), (0.50, 0.52, 1.22), 6, {})], 1530, "star8", ("dissolve", 0.6)),
+}
+if os.environ.get("PROMO"):
+    LINES = [PROMO.get(l[0], l) for l in LINES]
+
 # instrumental break (no vocals): national montage
 BREAK = [("H03", (0.50, 0.50, 1.20), (0.50, 0.55, 1.05), 6, ("dissolve", 0.8)),
          ("P03", (0.55, 0.50, 1.10), (0.55, 0.49, 1.13), 0, ("dissolve", 0.9)),
