@@ -420,7 +420,19 @@ class Video:
         if op.get("card"):
             k = 1 - smooth(ramp(t, op["card_end"], op["card_end"] + op["card_fade"]))
             if k > 0:
-                fr *= 1 - k
+                if not hasattr(self, "_card_bg"):
+                    bg, _ = self.plates[op.get("card_bg", "H01")].view(0.47, 0.58, 1.08)
+                    bg = cv2.GaussianBlur(bg, (0, 0), 10) * 0.22
+                    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+                    d = np.sqrt(((xx - W / 2) / (W * 0.55)) ** 2 + ((yy - H * 0.42) / (H * 0.5)) ** 2)
+                    bg *= np.clip(1.15 - 0.85 * d, 0.15, 1)[..., None]
+                    glow = np.exp(-(((xx - W / 2) / 420) ** 2 + ((yy - op["card_title_y"]) / 160) ** 2))
+                    bg += glow[..., None] * GOLD * 0.10
+                    self._card_bg = bg.astype(np.float32)
+                drift = 1 + 0.02 * ramp(t, 0, op["card_end"] + op["card_fade"])
+                bgm = cv2.resize(self._card_bg, None, fx=drift, fy=drift)
+                oy, ox = (bgm.shape[0] - H) // 2, (bgm.shape[1] - W) // 2
+                fr[:] = fr * (1 - k) + bgm[oy:oy + H, ox:ox + W] * k
                 self.intro_card(fr, t, op, k)
         for line in self.lines:
             if line["title"]:
@@ -525,19 +537,19 @@ class Video:
         """Black opening card: title descends and writes on, official flags beside gold clasped hands,
         the pledge line, then the credits (AHMED) as before."""
         y = op["card_title_y"]
-        d = ease_out(ramp(t, 0.3, 2.1))
-        p = smooth(ramp(t, 0.4, 2.0))
+        d = ease_out(ramp(t, 0.0, 1.3))
+        p = smooth(ramp(t, 0.05, 1.25))
         X0 = int(round(W / 2 - self.card_title.adv / 2)) - self.card_title.pad
         ty = y - 130 * (1 - d)
-        self.write_on(fr, self.card_title, W / 2, ty, p, k * smooth(ramp(t, 0.3, 0.8)), GOLD, glow=0.4)
-        if t > 2.1:
-            self.sweep(fr, self.card_title, X0, int(round(ty - self.card_title.base)), ramp(t, 2.1, 3.2), k)
+        self.write_on(fr, self.card_title, W / 2, ty, p, k * smooth(ramp(t, 0.0, 0.35)), GOLD, glow=0.4)
+        if t > 1.3:
+            self.sweep(fr, self.card_title, X0, int(round(ty - self.card_title.base)), ramp(t, 1.3, 2.2), k)
         # flags slide in gently from the sides, hands drawn between them
-        fa = ease_out(ramp(t, 1.8, 2.9)) * k
+        fa = ease_out(ramp(t, 1.0, 1.9)) * k
         fy = op["card_flags_y"]
         for j, fl in enumerate((self.card_sa, self.card_eg)):
             rgb, al = fl.frame(t + j * 0.37, amp=0.45)
-            slide = (1 - ease_out(ramp(t, 1.8, 2.9))) * 120
+            slide = (1 - ease_out(ramp(t, 1.0, 1.9))) * 120
             x = int(80 - slide) if j == 0 else int(W - 80 - fl.w + slide)
             yy = fy - fl.h // 2 - fl.pad
             blend(fr, cv2.GaussianBlur(al, (0, 0), 10), x + 10, yy + 12, DARK, 0.5 * fa)
@@ -546,7 +558,7 @@ class Video:
             reg = fr[yy:yy + h, x0c:x1c]
             alc = al[:reg.shape[0], x0c - x:x1c - x, None] * fa
             reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], x0c - x:x1c - x] * alc
-        prog = ramp(t, 2.2, 3.4)
+        prog = ramp(t, 1.4, 2.3)
         if prog > 0:
             core, glow, halo = stickers.draw("handshake", prog, 92)
             X, Y = int(W / 2 - core.shape[1] / 2), int(fy - core.shape[0] / 2)
@@ -554,15 +566,15 @@ class Video:
             blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, k)
         # pledge, written on in gold
         if self.pledge is not None:
-            self.write_on(fr, self.pledge, W / 2, op["card_pledge_y"], smooth(ramp(t, 3.3, 4.8)),
-                          k * ease_out(ramp(t, 3.2, 3.7)), GOLD, glow=0.25)
+            self.write_on(fr, self.pledge, W / 2, op["card_pledge_y"], smooth(ramp(t, 2.05, 3.0)),
+                          k * ease_out(ramp(t, 2.0, 2.35)), GOLD, glow=0.25)
         # credits: same entrance as before (roles line, then AHMED with a light sweep)
         cy = op["card_credit_y"]
-        ca = ease_out(ramp(t, 4.6, 5.4)) * k
+        ca = ease_out(ramp(t, 2.8, 3.3)) * k
         self.put(fr, self.credit_ar, W / 2, cy + 12 * (1 - ca / max(k, 1e-3)), ca, IVORY)
-        cn = ease_out(ramp(t, 5.1, 5.9)) * k
+        cn = ease_out(ramp(t, 3.1, 3.6)) * k
         X2, Y2 = self.put(fr, self.credit_name, W / 2, cy + 78 + 12 * (1 - cn / max(k, 1e-3)), cn, GOLD, glow=0.25)
-        self.sweep(fr, self.credit_name, X2, Y2, ramp(t, 5.9, 6.9), cn)
+        self.sweep(fr, self.credit_name, X2, Y2, ramp(t, 3.5, 4.2), cn)
 
     def flag_row(self, fr, t, t0, flags, gy, tw, th, gap, k=1.0):
         """A centred row of official flags (first one rightmost, reading right-to-left), staggered fade-rise."""

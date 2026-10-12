@@ -135,7 +135,7 @@ def main(words_path, feats_path, out_cfg, tdir, B):
         credit_ar="كلمات وألحان وتوزيع ومونتاج", accent_from=starts[1] - 0.3,
         title="حَمَاكِ الإِلَهُ بِلَادَ الحَرَمْ",
         opening=dict(t0=1.0, black=0.0, credits_out=starts[1] - 0.6,
-                     card=True, card_end=round(starts[0] - 1.4, 3), card_fade=1.0,
+                     card=True, card_end=round(starts[0] - 1.25, 3), card_fade=0.85,
                      card_title_y=560, card_flags_y=800, card_pledge_y=1100, card_credit_y=1222,
                      pledge="نَفْدِيكِ بِأَرْوَاحِنَا يَا أَرْضَ العِزَّةِ وَالكَرَمْ"),
         tail=TAIL,
