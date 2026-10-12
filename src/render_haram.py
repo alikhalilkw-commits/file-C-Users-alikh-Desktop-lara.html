@@ -273,6 +273,11 @@ class Video:
             self.card_title = R.Sprite(c["title"], f("kufi", 96))
             self.card_sa = haram_assets.WavingFlag(c["flag_sa"], 190)
             self.card_eg = haram_assets.WavingFlag(c["flag_eg"], 190)
+            self.card_gulf = []
+            for path in c["opening"].get("gulf_flags", []):
+                g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
+                self.card_gulf.append(cv2.resize(g, (96, 72), interpolation=cv2.INTER_AREA))
+            self.card_arab = R.Sprite("الوَطَنُ العَرَبِيُّ", f("messiri", 46))
 
     def put(self, fr, sp, cx, base, a, color, glow=0.0, shadow=True):
         X = int(round(cx - sp.adv / 2)) - sp.pad
@@ -536,17 +541,38 @@ class Video:
             X, Y = int(W / 2 - core.shape[1] / 2), int(fy - core.shape[0] / 2)
             blend(fr, glow, X, Y, GOLD, 0.9 * k, "add")
             blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, k)
+        # Gulf flags (Kuwait first, reading right-to-left), then «الوطن العربي» beneath them
+        gy = op["card_gulf_y"]
+        n = len(self.card_gulf)
+        gap = 26
+        total = n * 96 + (n - 1) * gap
+        for j, img in enumerate(self.card_gulf):
+            ga = ease_out(ramp(t, 3.0 + 0.12 * j, 3.5 + 0.12 * j)) * k
+            if ga <= 0:
+                continue
+            x = int(W / 2 + total / 2 - (j + 1) * 96 - j * gap)
+            y = int(gy - 36 + 14 * (1 - ga / max(k, 1e-3)))
+            sh = np.zeros((72 + 40, 96 + 40), np.float32)
+            sh[20:92, 20:116] = 1
+            blend(fr, cv2.GaussianBlur(sh, (0, 0), 8), x - 14, y - 12, DARK, 0.55 * ga)
+            frame_m = np.zeros((76, 100), np.float32)
+            cv2.rectangle(frame_m, (0, 0), (99, 75), 1.0, 2)
+            reg = fr[y:y + 72, x:x + 96]
+            reg[:] = reg * (1 - ga) + img[:reg.shape[0], :reg.shape[1]] * ga
+            blend(fr, frame_m, x - 2, y - 2, GOLD, 0.7 * ga)
+        self.write_on(fr, self.card_arab, W / 2, op["card_arab_y"], smooth(ramp(t, 3.8, 4.6)),
+                      k * ease_out(ramp(t, 3.7, 4.1)), IVORY, glow=0.15)
         # pledge, written on in gold
         if self.pledge is not None:
-            self.write_on(fr, self.pledge, W / 2, op["card_pledge_y"], smooth(ramp(t, 3.3, 4.8)),
-                          k * ease_out(ramp(t, 3.2, 3.7)), GOLD, glow=0.25)
+            self.write_on(fr, self.pledge, W / 2, op["card_pledge_y"], smooth(ramp(t, 4.4, 5.6)),
+                          k * ease_out(ramp(t, 4.3, 4.8)), GOLD, glow=0.25)
         # credits: same entrance as before (roles line, then AHMED with a light sweep)
         cy = op["card_credit_y"]
-        ca = ease_out(ramp(t, 4.6, 5.4)) * k
+        ca = ease_out(ramp(t, 5.4, 6.1)) * k
         self.put(fr, self.credit_ar, W / 2, cy + 12 * (1 - ca / max(k, 1e-3)), ca, IVORY)
-        cn = ease_out(ramp(t, 5.1, 5.9)) * k
+        cn = ease_out(ramp(t, 5.8, 6.5)) * k
         X2, Y2 = self.put(fr, self.credit_name, W / 2, cy + 78 + 12 * (1 - cn / max(k, 1e-3)), cn, GOLD, glow=0.25)
-        self.sweep(fr, self.credit_name, X2, Y2, ramp(t, 5.9, 6.9), cn)
+        self.sweep(fr, self.credit_name, X2, Y2, ramp(t, 6.5, 7.3), cn)
 
     def ending(self, fr, t, en):
         w0 = en["write0"]

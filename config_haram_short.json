@@ -646,10 +646,19 @@
   "card": true,
   "card_end": 7.395,
   "card_fade": 1.0,
-  "card_title_y": 560,
-  "card_flags_y": 800,
-  "card_pledge_y": 1100,
-  "card_credit_y": 1222,
+  "card_title_y": 470,
+  "card_flags_y": 700,
+  "card_gulf_y": 1050,
+  "card_arab_y": 1140,
+  "card_pledge_y": 1238,
+  "card_credit_y": 1335,
+  "gulf_flags": [
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/kw_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/ae_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/qa_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/bh_4x3.png",
+   "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/saudi/flags/om_4x3.png"
+  ],
   "pledge": "نَفْدِيكِ بِأَرْوَاحِنَا يَا أَرْضَ العِزَّةِ وَالكَرَمْ"
  },
  "tail": 6.0,
