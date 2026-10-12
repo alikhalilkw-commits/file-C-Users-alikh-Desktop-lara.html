@@ -621,27 +621,22 @@ class Video:
             reg = fr[y:y + h, x:x + w]
             alc = al[:reg.shape[0], :reg.shape[1], None] * fa
             reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], :reg.shape[1]] * alc
-        # arms drawn from the flag downwards
+        # calligraphic gold arms drawn from the flag, ending in open cupped hands beneath the flags
         p = smooth(ramp(t, w0 + 1.5, w0 + 2.9))
+        hp = smooth(ramp(t, w0 + 2.6, w0 + 3.3))
         if p > 0:
-            n = max(2, int(np.searchsorted(frac, p)))
-            y0, y1 = int(en["sa_y"]), int(en["hands_y"] + 40)
-            m = np.zeros((y1 - y0 + 60, W), np.float32)
-            for arm in (left, right):
-                pts = arm[:n].copy()
-                pts[:, 1] -= y0 - 30
-                cv2.polylines(m, [np.round(pts * 4).astype(np.int32)], False, 1.0, 4, cv2.LINE_AA, shift=2)
-            glow = np.clip(cv2.GaussianBlur(m, (0, 0), 8) * 3.0, 0, 1)
-            blend(fr, glow, 0, y0 - 30, GOLD, 0.75, "add")
-            blend(fr, m, 0, y0 - 30, GOLD * 0.75 + IVORY * 0.25, 1.0)
-        # clasped hands where the arms meet
-        hp = ramp(t, w0 + 2.7, w0 + 3.5)
-        if hp > 0:
-            core, glow, halo = stickers.draw("handshake", hp, 46)
-            X, Y = int(W / 2 - core.shape[1] / 2), int(en["hands_y"] - core.shape[0] / 2)
-            blend(fr, halo, X, Y, DARK, 0.5)
-            blend(fr, glow, X, Y, GOLD, 0.9, "add")
-            blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, 1.0)
+            if not hasattr(self, "_arms"):
+                import embrace_art
+                self._arms = embrace_art.Embrace(en["sa_y"] + self.end_sa.h // 2, self.end_sa.w // 2, en["hands_y"])
+            ea = self._arms
+            fill, edge = ea.layers(p, hp)
+            y0 = ea.y0
+            glow = np.clip(cv2.GaussianBlur(edge, (0, 0), 9) * 2.2, 0, 1)
+            shade = np.linspace(1.0, 0.7, fill.shape[0], dtype=np.float32)[:, None]
+            blend(fr, cv2.GaussianBlur(fill, (0, 0), 10), 6, y0 + 10, DARK, 0.5)
+            blend(fr, glow, 0, y0, GOLD, 0.6, "add")
+            blend(fr, fill * shade, 0, y0, GOLD * 0.5, 0.55)
+            blend(fr, edge, 0, y0, GOLD * 0.8 + IVORY * 0.2, 1.0)
         # the Arab flags gathered inside the embrace, appearing from the centre outwards
         k = 0
         for r, (row, ry) in enumerate(zip(self.embrace_rows, en["rows_y"])):
