@@ -37,6 +37,7 @@ GRADES = {  # (multiply, shadow tint, highlight tint, contrast)
     "A": (np.array([1.0, 1.0, 1.0]), np.array([-0.02, 0.0, 0.03]), np.array([0.04, 0.02, -0.02]), 1.09),
     "P": (np.array([1.0, 1.0, 1.0]), np.zeros(3), np.zeros(3), 1.0),
     "X": (np.array([1.02, 1.0, 0.97]), np.zeros(3), np.array([0.02, 0.01, -0.01]), 1.04),
+    "N": (np.array([1.0, 1.0, 1.0]), np.zeros(3), np.zeros(3), 1.02),
 }
 
 
@@ -413,7 +414,7 @@ class Video:
             k = smooth(ramp(t, en["t0"], en["t0"] + 1.4))
             bg = self.card_backdrop(c["opening"])
             fr[:] = fr * (1 - k) + bg * k
-            fb = smooth(ramp(t, self.total - 0.9, self.total))
+            fb = smooth(ramp(t, self.total - 0.45, self.total))
             fr *= 1 - 0.9 * fb
         # opening title (also the timed caption of the first sung line)
         op = c["opening"]
@@ -527,7 +528,7 @@ class Video:
 
     def card_backdrop(self, op):
         if not hasattr(self, "_card_bg"):
-            bg, _ = self.plates[op.get("card_bg", "H01")].view(0.47, 0.58, 1.08)
+            bg, _ = self.plates[op.get("card_bg", "H01")].view(0.5, 0.48, 1.0)
             bg = cv2.GaussianBlur(bg, (0, 0), 10) * 0.22
             yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
             d = np.sqrt(((xx - W / 2) / (W * 0.55)) ** 2 + ((yy - H * 0.42) / (H * 0.5)) ** 2)
@@ -734,14 +735,14 @@ class Video:
         w0 = en["write0"]
         tt = t - w0
         y = op["card_title_y"]
-        d = ease_out(ramp(tt, 0.0, 1.4))
-        p = smooth(ramp(tt, 0.05, 1.35))
+        d = ease_out(ramp(tt, 0.0, 1.1))
+        p = smooth(ramp(tt, 0.05, 1.05))
         X0 = int(round(W / 2 - self.end_head.adv / 2)) - self.end_head.pad
         ty = y - 130 * (1 - d)
         self.write_on(fr, self.end_head, W / 2, ty, p, smooth(ramp(tt, 0.0, 0.35)), GOLD, glow=0.4)
-        if tt > 1.4:
-            self.sweep(fr, self.end_head, X0, int(round(ty - self.end_head.base)), ramp(tt, 1.4, 2.4), 1.0)
-        fa = ease_out(ramp(tt, 1.0, 1.9))
+        if tt > 1.1:
+            self.sweep(fr, self.end_head, X0, int(round(ty - self.end_head.base)), ramp(tt, 1.1, 1.9), 1.0)
+        fa = ease_out(ramp(tt, 0.7, 1.4))
         fy = op["card_flags_y"]
         for j, fl in enumerate((self.card_sa, self.card_eg)):
             rgb, al = fl.frame(t + j * 0.37, amp=0.45)
@@ -754,22 +755,22 @@ class Video:
             reg = fr[yy:yy + h, x0c:x1c]
             alc = al[:reg.shape[0], x0c - x:x1c - x, None] * fa
             reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], x0c - x:x1c - x] * alc
-        prog = ramp(tt, 1.4, 2.3)
+        prog = ramp(tt, 1.0, 1.7)
         if prog > 0:
             core, glow, halo = stickers.draw("handshake", prog, 92)
             X, Y = int(W / 2 - core.shape[1] / 2), int(fy - core.shape[0] / 2)
             blend(fr, glow, X, Y, GOLD, 0.9, "add")
             blend(fr, core, X, Y, GOLD * 0.7 + IVORY * 0.3, 1.0)
         my = op["card_pledge_y"] + 20
-        pa = ease_out(ramp(tt, 2.1, 2.5))
-        self.write_on(fr, self.end_msg1, W / 2, my, smooth(ramp(tt, 2.2, 3.0)), pa, GOLD, glow=0.2)
-        self.write_on(fr, self.end_msg2, W / 2, my + 78, smooth(ramp(tt, 2.7, 3.6)), pa, GOLD, glow=0.2)
+        pa = ease_out(ramp(tt, 1.4, 1.7))
+        self.write_on(fr, self.end_msg1, W / 2, my, smooth(ramp(tt, 1.45, 2.1)), pa, GOLD, glow=0.2)
+        self.write_on(fr, self.end_msg2, W / 2, my + 78, smooth(ramp(tt, 1.8, 2.5)), pa, GOLD, glow=0.2)
         cy = op["card_credit_y"] + 120
-        ca = ease_out(ramp(tt, 3.5, 4.1))
+        ca = ease_out(ramp(tt, 2.3, 2.75))
         self.put(fr, self.credit_ar, W / 2, cy + 12 * (1 - ca), ca, IVORY)
-        cn = ease_out(ramp(tt, 3.8, 4.4))
+        cn = ease_out(ramp(tt, 2.5, 2.95))
         X2, Y2 = self.put(fr, self.credit_name, W / 2, cy + 78 + 12 * (1 - cn), cn, GOLD, glow=0.25)
-        self.sweep(fr, self.credit_name, X2, Y2, ramp(tt, 4.3, 5.0), cn)
+        self.sweep(fr, self.credit_name, X2, Y2, ramp(tt, 2.9, 3.4), cn)
 
 
 def main():
