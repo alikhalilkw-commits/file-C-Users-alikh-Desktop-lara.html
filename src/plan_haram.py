@@ -53,7 +53,7 @@ LINES = [
     ("L20", [("H02", (0.40, 0.60, 1.25), (0.50, 0.50, 1.08), 0, {})], LOW, "kaaba", ("light", 0.5)),
     ("L21", [("R01", (0.62, 0.30, 1.45), (0.56, 0.45, 1.12), 6, {})], LOW, "skyline", ("dissolve", 0.5)),
     ("L22", [("X01", (0.50, 0.64, 1.30), (0.45, 0.56, 1.45), 0, {"react": False})], LOW, None, ("dissolve", 0.6)),
-    ("L23", [("R03", (0.60, 0.40, 1.40), (0.52, 0.50, 1.12), 6, {})], LOW, "star8", ("dissolve", 0.5)),
+    ("L23", [("H03", (0.50, 0.45, 1.25), (0.50, 0.55, 1.05), 6, {})], LOW, "star8", ("dissolve", 0.5)),
     ("L24", [("R03", (0.50, 0.45, 1.30), (0.50, 0.50, 1.02), 6, {})], LOW, "skyline", ("dissolve", 0.6)),
     ("L25", [("R01", (0.60, 0.25, 1.30), (0.60, 0.35, 1.15), 5, {"warm": True})], LOW, "star8", ("dissolve", 0.6)),
     ("L26", [("P01", (0.50, 0.45, 1.08), (0.50, 0.43, 1.11), 0, {})], LOW, "palm_swords", ("dissolve", 0.6)),
@@ -74,7 +74,9 @@ def main(words_path, feats_path, out_cfg, tdir, B):
     for w in words:
         lines.setdefault(w["line"], []).append(w)
     order = sorted(lines)
-    assert len(order) == len(LINES)
+    assert set(order) <= set(range(len(LINES)))
+    sel = [LINES[i] for i in order]  # supports shortened edits that drop whole lines
+    pos14 = order.index(14) if 14 in order else None
     starts = [lines[i][0]["start"] for i in order]
     ends = [lines[i][-1]["end"] for i in order]
     beats = np.load(feats_path)["beats"]
@@ -86,11 +88,11 @@ def main(words_path, feats_path, out_cfg, tdir, B):
 
     cuts = [0.0] + [cut(s - 0.35) for s in starts[1:]]
     shots, meta = [], []
-    break_t0 = ends[14] + 0.6  # after «وَعَادُوا يَجُرُّونَ ثَوْبَ النَّدَمْ» (hook)
-    for k, (lid, shs, y, icon, tr) in enumerate(LINES):
+    break_t0 = ends[pos14] + 0.6 if pos14 is not None else 1e9  # after «وَعَادُوا يَجُرُّونَ ثَوْبَ النَّدَمْ» (hook)
+    for k, (lid, shs, y, icon, tr) in enumerate(sel):
         t0 = cuts[k]
         t1 = cuts[k + 1] if k + 1 < len(cuts) else dur + TAIL
-        if k == 14:
+        if k == pos14:
             t1 = break_t0
         parts = []
         if len(shs) == 2:
@@ -105,14 +107,14 @@ def main(words_path, feats_path, out_cfg, tdir, B):
                 sh = dict(kind="plate", img=s[0], t0=a, t1=b, **{"from": list(s[1]), "to": list(s[2])}, par=s[3], **s[4])
             shots.append(sh)
         meta.append(dict(id=lid, y=y, icon=icon, side="left" if k % 2 else "right", title=(k == 0),
-                         size=92 if k == 0 else 70, hold=1.35 if k == 27 else 1.3))
-        if k == 14:
-            bt = [break_t0, break_t0 + 6.2, break_t0 + 12.6, cuts[15]]
+                         size=92 if k == 0 else 70, hold=1.35 if k == len(sel) - 1 else 1.3))
+        if k == pos14:
+            bt = [break_t0, break_t0 + 6.2, break_t0 + 12.6, cuts[pos14 + 1]]
             for j, (img, f, to, par, _) in enumerate(BREAK):
                 shots.append(dict(kind="plate", img=img, t0=bt[j], t1=bt[j + 1], **{"from": list(f), "to": list(to)}, par=par))
     # transitions: style of the cut INTO a shot is stored on the previous shot
     tr_into = {}
-    for k, (lid, shs, y, icon, tr) in enumerate(LINES):
+    for k, (lid, shs, y, icon, tr) in enumerate(sel):
         if tr:
             tr_into[round(cuts[k], 3)] = tr
     for i, sh in enumerate(shots[:-1]):
@@ -131,7 +133,7 @@ def main(words_path, feats_path, out_cfg, tdir, B):
         flag_sa=f"{B}/scratchpad/saudi/flags/sa_3x2.png", flag_eg=f"{B}/scratchpad/saudi/flags/eg_3x2.png",
         words=words_path, feats=feats_path, images=images, shots=shots, lines=meta,
         credit_ar="كلمات وألحان وتوزيع ومونتاج", accent_from=starts[1] - 0.3,
-        opening=dict(t0=1.0, black=1.0, credits_out=starts[0] - 0.4,
+        opening=dict(t0=1.0, black=1.0, credits_out=starts[1] - 0.6,
                      pledge="نَفْدِيكِ بِأَرْوَاحِنَا يَا أَرْضَ العِزَّةِ وَالكَرَمْ"),
         tail=TAIL,
         ending=dict(t0=round(dur - 1.4, 3), write0=round(dur - 0.9, 3), black=round(dur + TAIL - 0.8, 3), head_y=380,
@@ -145,7 +147,7 @@ def main(words_path, feats_path, out_cfg, tdir, B):
     occ = []
     for k, li in enumerate(order):
         ws = lines[li]
-        occ.append(dict(id=LINES[k][0], occurrence=k + 1, section=ws[0]["section"],
+        occ.append(dict(id=sel[k][0], occurrence=k + 1, section=ws[0]["section"],
                         text=" ".join(w["text"] for w in ws), start=round(ws[0]["start"], 3), end=round(ws[-1]["end"], 3),
                         words=[dict(text=w["text"], start=round(w["start"], 3), end=round(w["end"], 3),
                                     start_frame=int(round(w["start"] * FPS)), end_frame=int(round(w["end"] * FPS)))
