@@ -109,3 +109,61 @@ class Embrace:
         edge = np.clip(cv2.dilate(allm, k, iterations=1) - cv2.erode(allm, k, iterations=1), 0, 1)
         edge = cv2.GaussianBlur(edge, (0, 0), 0.6) * 1.3
         return allm, np.clip(edge, 0, 1)
+
+
+def arms_mask(cx, flag_bottom, flag_half_w, meet_y, p_arm, close, W=1080, y0=0, h=1920):
+    """Filled mask of both arms + hands. close=0 hands apart, close=1 hands meet and interlock at the centre."""
+    wx = 330 + (452 - 330) * close
+    wy = meet_y - 10 * close
+    left = catmull([(cx - flag_half_w + 24, flag_bottom - 8), (cx - flag_half_w - 80, flag_bottom + 26),
+                    (200, flag_bottom + 110), (150, flag_bottom + 215), (175, meet_y - 80 + 20 * close),
+                    (wx - 95, wy - 6), (wx, wy)])
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(left, axis=0), axis=1))]
+    seg /= seg[-1]
+    n = max(2, int(np.searchsorted(seg, p_arm)))
+    m = np.zeros((h * SS, W * SS), np.uint8)
+    off = np.array([0, y0], np.float32)
+    for sgn in (1, -1):
+        c = left[:n].copy()
+        if sgn < 0:
+            c[:, 0] = W - c[:, 0]
+        poly = ribbon(c, 46, 46 - 14 * min(1, n / len(left)))
+        cv2.fillPoly(m, [np.round((poly - off) * SS).astype(np.int32)], 255, cv2.LINE_AA)
+        if p_arm >= 0.999:
+            end = c[-1]
+            d = c[-1] - c[-6]
+            d /= np.linalg.norm(d)
+            up = np.array([d[1], -d[0]]) * (1 if sgn > 0 else -1)
+            if up[1] > 0:
+                up = -up
+            for poly in hand(end, d, up, 1.25):
+                cv2.fillPoly(m, [np.round((poly - off) * SS).astype(np.int32)], 255, cv2.LINE_AA)
+    return cv2.resize(m, (W, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
+
+
+def gold_metal(mask, light=(-0.55, -0.75, 0.6)):
+    """Shade a mask as polished embossed gold: returns (rgb, alpha) with bevel, diffuse and specular."""
+    a = mask
+    if a.max() <= 0:
+        return np.zeros(a.shape + (3,), np.float32), a
+    dist = cv2.distanceTransform((a > 0.5).astype(np.uint8), cv2.DIST_L2, 5).astype(np.float32)
+    hgt = np.clip(dist / 11.0, 0, 1)
+    hgt = np.sin(hgt * np.pi / 2)
+    hgt = cv2.GaussianBlur(hgt, (0, 0), 1.6)
+    gy, gx = np.gradient(hgt * 9.0)
+    nz = np.ones_like(gx)
+    nrm = np.sqrt(gx * gx + gy * gy + nz * nz)
+    nx, ny, nz = -gx / nrm, -gy / nrm, nz / nrm
+    L = np.array(light, np.float32); L /= np.linalg.norm(L)
+    diff = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
+    # Blinn specular, viewer straight on
+    Hh = L + np.array([0, 0, 1], np.float32); Hh /= np.linalg.norm(Hh)
+    spec = np.clip(nx * Hh[0] + ny * Hh[1] + nz * Hh[2], 0, 1) ** 40
+    base_dark = np.array([0.42, 0.26, 0.08], np.float32)
+    base_lite = np.array([1.0, 0.84, 0.48], np.float32)
+    col = base_dark + (base_lite - base_dark) * diff[..., None]
+    # environment band reflection for a metallic feel
+    yy = np.linspace(0, 1, a.shape[0], dtype=np.float32)[:, None, None]
+    col = col * (0.85 + 0.15 * np.cos(yy * 18 + ny[..., None] * 3))
+    col = np.clip(col + spec[..., None] * np.array([1.0, 0.97, 0.88], np.float32) * 0.9, 0, 1)
+    return col.astype(np.float32), a

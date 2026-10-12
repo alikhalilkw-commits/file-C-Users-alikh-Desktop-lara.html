@@ -147,7 +147,7 @@ def main(words_path, feats_path, out_cfg, tdir, B):
         arab_flags_unused=[f"{B}/scratchpad/saudi/flags/{g}_4x3.png" for g in
                     ("jo", "iq", "sy", "lb", "ps", "ye", "sd", "ly", "tn", "dz", "ma", "mr", "so", "dj", "km")],
         ending=dict(t0=round(dur - 1.4, 3), write0=round(dur - 0.9, 3), black=round(dur + TAIL - 0.8, 3), head_y=320,
-                    sa_y=470, rows_y=[610, 678, 746], hands_y=880, msg_y=1110, credit_y=1300),
+                    sa_y=480, rows_y=[650, 718, 786], hands_y=900, msg_y=1110, credit_y=1300),
         watermark=dict(y=960, alpha=0.36, alpha_hi=0.6, emphasis=[[0, 6.0], [92.0, 96.0], [dur - 1.4, dur + TAIL + 1]]),
     )
     json.dump(cfg, open(out_cfg, "w"), ensure_ascii=False, indent=1)

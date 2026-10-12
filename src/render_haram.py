@@ -273,7 +273,7 @@ class Video:
         for path in c.get("gulf_flags", []):
             g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
             self.card_gulf.append(cv2.resize(g, (96, 72), interpolation=cv2.INTER_AREA))
-        self.end_sa = haram_assets.WavingFlag(c["flag_sa"], 150)
+        self.end_sa = haram_assets.WavingFlag(c["flag_sa"], 190)
         self.embrace_rows = []
         for row in c.get("embrace_rows", []):
             imgs = []
@@ -607,59 +607,97 @@ class Video:
         return left, right, seg / seg[-1]
 
     def embrace(self, fr, t, w0, en):
-        if not hasattr(self, "_emb"):
-            self._emb = self.embrace_geometry(en)
-        left, right, frac = self._emb
-        # Saudi flag at the heart of the composition
-        fa = ease_out(ramp(t, w0 + 0.9, w0 + 1.7))
+        """Luminous Saudi flag; the Arab flags fly out from behind it; 3D gold arms wrap around and the
+        hands close onto each other beneath them."""
+        import embrace_art
+        cx = W / 2
+        sa = self.end_sa
+        fy = en["sa_y"]
+        fa = ease_out(ramp(t, w0 + 0.5, w0 + 1.3))
+        # radiant light behind the flag
         if fa > 0:
-            rgb, al = self.end_sa.frame(t, amp=0.5)
-            x = int(W / 2 - self.end_sa.w / 2)
-            y = int(en["sa_y"] - self.end_sa.h / 2 - self.end_sa.pad + 14 * (1 - fa))
-            blend(fr, cv2.GaussianBlur(al, (0, 0), 10), x + 10, y + 12, DARK, 0.5 * fa)
+            if not hasattr(self, "_rays"):
+                yy, xx = np.mgrid[0:900, 0:W].astype(np.float32)
+                ang = np.arctan2(yy - 450, xx - cx)
+                r = np.hypot(yy - 450, xx - cx)
+                self._rays = (ang, r)
+            ang, r = self._rays
+            rays = (0.55 + 0.45 * np.cos(ang * 14 + t * 0.6)) * np.exp(-r / 330)
+            halo = np.exp(-(r / 210) ** 2)
+            pulse = 0.9 + 0.1 * math.sin(t * 2.4)
+            blend(fr, np.clip(rays * 0.9 + halo, 0, 1).astype(np.float32), 0, int(fy - 450), GOLD,
+                  0.55 * fa * pulse, "add")
+        # flags emerge from behind the Saudi flag and fly to their places (drawn before the flag)
+        tw, th, gap = 70, 52, 12
+        for r_i, (row, ry) in enumerate(zip(self.embrace_rows, en["rows_y"])):
+            nrow = len(row)
+            total = nrow * tw + (nrow - 1) * gap
+            for j, img in enumerate(row):
+                tx = W / 2 + total / 2 - (j + 1) * tw - j * gap + tw / 2
+                order = abs(j - (nrow - 1) / 2)
+                st = w0 + 1.3 + 0.22 * r_i + 0.07 * order
+                q = ease_out(ramp(t, st, st + 0.7))
+                if q <= 0:
+                    continue
+                # arc path from the flag centre with a 3D scale-up
+                x = cx + (tx - cx) * q
+                y = fy + (ry - fy) * q - 60 * math.sin(math.pi * q)
+                sc = 0.35 + 0.65 * q + 0.12 * math.sin(math.pi * q)
+                w_, h_ = max(4, int(tw * sc)), max(3, int(th * sc))
+                im = cv2.resize(img, (w_, h_), interpolation=cv2.INTER_AREA)
+                # slight perspective tilt while flying
+                tilt = 0.25 * (1 - q) * (1 if tx > cx else -1)
+                src = np.float32([[0, 0], [w_, 0], [w_, h_], [0, h_]])
+                dy = tilt * h_
+                dst = np.float32([[0, max(0, dy)], [w_, max(0, -dy)], [w_, h_ - max(0, -dy)], [0, h_ - max(0, dy)]])
+                M = cv2.getPerspectiveTransform(src, dst)
+                im = cv2.warpPerspective(im, M, (w_, h_))
+                al = cv2.warpPerspective(np.ones((h_, w_), np.float32), M, (w_, h_))
+                X, Y = int(x - w_ / 2), int(y - h_ / 2)
+                sh = cv2.GaussianBlur(np.pad(al, 20), (0, 0), 7)
+                blend(fr, sh, X - 20 + 6, Y - 20 + 10, DARK, 0.55 * min(1, q * 2))
+                a3 = al[..., None] * min(1, q * 3)
+                reg = fr[Y:Y + h_, X:X + w_]
+                hh, ww = reg.shape[:2]
+                reg[:] = reg * (1 - a3[:hh, :ww]) + im[:hh, :ww] * a3[:hh, :ww]
+                if q > 0.95:
+                    fm = np.zeros((h_ + 4, w_ + 4), np.float32)
+                    cv2.rectangle(fm, (0, 0), (w_ + 3, h_ + 3), 1.0, 2)
+                    blend(fr, fm, X - 2, Y - 2, GOLD, 0.7 * (q - 0.95) * 20)
+        # the Saudi flag, luminous, in front
+        if fa > 0:
+            rgb, al = sa.frame(t, amp=0.5)
+            x = int(cx - sa.w / 2)
+            y = int(fy - sa.h / 2 - sa.pad + 16 * (1 - fa))
+            glow = cv2.GaussianBlur(np.pad(al, 40), (0, 0), 16)
+            blend(fr, np.clip(glow * 1.6, 0, 1), x - 40, y - 40, GOLD, 0.6 * fa, "add")
             h, w = al.shape
             reg = fr[y:y + h, x:x + w]
             alc = al[:reg.shape[0], :reg.shape[1], None] * fa
-            reg[:] = reg * (1 - alc) + rgb[:reg.shape[0], :reg.shape[1]] * alc
-        # calligraphic gold arms drawn from the flag, ending in open cupped hands beneath the flags
-        p = smooth(ramp(t, w0 + 1.5, w0 + 2.9))
-        hp = smooth(ramp(t, w0 + 2.6, w0 + 3.3))
+            lit = np.clip(rgb * 1.12 + 0.04, 0, 1)
+            reg[:] = reg * (1 - alc) + lit[:reg.shape[0], :reg.shape[1]] * alc
+        # 3D gold arms: draw in, then the hands close onto each other
+        p = smooth(ramp(t, w0 + 2.3, w0 + 3.3))
+        close = smooth(ramp(t, w0 + 3.3, w0 + 4.1))
         if p > 0:
-            if not hasattr(self, "_arms"):
-                import embrace_art
-                self._arms = embrace_art.Embrace(en["sa_y"] + self.end_sa.h // 2, self.end_sa.w // 2, en["hands_y"])
-            ea = self._arms
-            fill, edge = ea.layers(p, hp)
-            y0 = ea.y0
-            glow = np.clip(cv2.GaussianBlur(edge, (0, 0), 9) * 2.2, 0, 1)
-            shade = np.linspace(1.0, 0.7, fill.shape[0], dtype=np.float32)[:, None]
-            blend(fr, cv2.GaussianBlur(fill, (0, 0), 10), 6, y0 + 10, DARK, 0.5)
-            blend(fr, glow, 0, y0, GOLD, 0.6, "add")
-            blend(fr, fill * shade, 0, y0, GOLD * 0.5, 0.55)
-            blend(fr, edge, 0, y0, GOLD * 0.8 + IVORY * 0.2, 1.0)
-        # the Arab flags gathered inside the embrace, appearing from the centre outwards
-        k = 0
-        for r, (row, ry) in enumerate(zip(self.embrace_rows, en["rows_y"])):
-            nrow = len(row)
-            tw, th, gap = 70, 52, 12
-            total = nrow * tw + (nrow - 1) * gap
-            for j, img in enumerate(row):
-                x = int(W / 2 + total / 2 - (j + 1) * tw - j * gap)
-                dist = abs((x + tw / 2) - W / 2) / (total / 2 + 1)
-                st = w0 + 2.0 + 0.25 * r + 0.5 * dist
-                ga = ease_out(ramp(t, st, st + 0.45))
-                if ga <= 0:
-                    continue
-                y = int(ry - th / 2 + 10 * (1 - ga))
-                sh = np.zeros((th + 40, tw + 40), np.float32)
-                sh[20:20 + th, 20:20 + tw] = 1
-                blend(fr, cv2.GaussianBlur(sh, (0, 0), 7), x - 14, y - 12, DARK, 0.5 * ga)
-                reg = fr[y:y + th, x:x + tw]
-                reg[:] = reg * (1 - ga) + img[:reg.shape[0], :reg.shape[1]] * ga
-                fm = np.zeros((th + 4, tw + 4), np.float32)
-                cv2.rectangle(fm, (0, 0), (tw + 3, th + 3), 1.0, 2)
-                blend(fr, fm, x - 2, y - 2, GOLD, 0.7 * ga)
-                k += 1
+            y0 = int(fy)
+            hgt = int(en["hands_y"] + 140 - y0)
+            m = embrace_art.arms_mask(cx, fy + sa.h // 2, sa.w // 2, en["hands_y"], p, close, W, y0, hgt)
+            rgb, al = embrace_art.gold_metal(m)
+            sh = cv2.GaussianBlur(al, (0, 0), 12)
+            blend(fr, sh, 10, y0 + 16, DARK, 0.6)
+            gl = cv2.GaussianBlur(al, (0, 0), 14)
+            blend(fr, gl, 0, y0, GOLD, 0.35, "add")
+            reg = fr[y0:y0 + hgt]
+            reg[:] = reg * (1 - al[..., None]) + rgb * al[..., None]
+            if close > 0.98:
+                # a soft flash where the hands meet
+                fl = np.zeros((300, 300), np.float32)
+                cv2.circle(fl, (150, 150), 40, 1.0, -1)
+                fl = cv2.GaussianBlur(fl, (0, 0), 40)
+                k = math.exp(-(t - (w0 + 4.1)) / 0.5) if t > w0 + 4.1 else 1.0
+                blend(fr, fl * 2.0, int(cx - 150), int(en["hands_y"] - 150), np.array([1, 0.9, 0.65], np.float32),
+                      0.6 * k, "add")
 
     def ending(self, fr, t, en):
         w0 = en["write0"]
@@ -677,19 +715,19 @@ class Video:
         if not hasattr(self, "_mpanel"):
             self._mpanel = rounded_panel(900, 200, r=32)
         mp, mpp = self._mpanel
-        pa = ease_out(ramp(t, w0 + 3.2, w0 + 3.8))
+        pa = ease_out(ramp(t, w0 + 4.0, w0 + 4.5))
         blend(fr, mp, int(W / 2 - 450) - mpp, int(en["msg_y"] - 82) - mpp, PANEL, 0.62 * pa)
-        self.write_on(fr, self.end_msg1, W / 2, en["msg_y"], smooth(ramp(t, w0 + 3.4, w0 + 4.4)), pa, IVORY)
-        self.write_on(fr, self.end_msg2, W / 2, en["msg_y"] + 80, smooth(ramp(t, w0 + 4.0, w0 + 5.1)), pa, IVORY, glow=0.12)
+        self.write_on(fr, self.end_msg1, W / 2, en["msg_y"], smooth(ramp(t, w0 + 4.1, w0 + 4.9)), pa, IVORY)
+        self.write_on(fr, self.end_msg2, W / 2, en["msg_y"] + 80, smooth(ramp(t, w0 + 4.6, w0 + 5.5)), pa, IVORY, glow=0.12)
         # credits
-        ca = ease_out(ramp(t, w0 + 5.0, w0 + 5.7))
+        ca = ease_out(ramp(t, w0 + 5.4, w0 + 6.0))
         if not hasattr(self, "_epanel"):
             self._epanel = rounded_panel(520, 150, r=30)
         ep, epp = self._epanel
         blend(fr, ep, int(W / 2 - 260) - epp, int(en["credit_y"] - 62) - epp, PANEL, 0.6 * ca)
         self.put(fr, self.end_credit_ar, W / 2, en["credit_y"], ca, IVORY)
         X2, Y2 = self.put(fr, self.end_credit_name, W / 2, en["credit_y"] + 66, ca, GOLD, glow=0.25)
-        self.sweep(fr, self.end_credit_name, X2, Y2, ramp(t, w0 + 5.6, w0 + 6.5), ca)
+        self.sweep(fr, self.end_credit_name, X2, Y2, ramp(t, w0 + 5.9, w0 + 6.7), ca)
 
 
 def main():
