@@ -268,6 +268,7 @@ class Video:
         self.end_msg2 = R.Sprite("إِلَى السُّعُودِيَّةِ أَرْضِ العِزِّ وَالكَرَمْ", f("messiri", 50))
         self.end_credit_ar = R.Sprite(c["credit_ar"], f("messiri", 36))
         self.end_credit_name = R.Sprite("AHMED", f("cinzel", 52), tracking=12, rtl=False)
+        self.pledge = R.Sprite(c["opening"]["pledge"], f("messiri", 50)) if c["opening"].get("pledge") else None
 
     def put(self, fr, sp, cx, base, a, color, glow=0.0, shadow=True):
         X = int(round(cx - sp.adv / 2)) - sp.pad
@@ -405,6 +406,9 @@ class Video:
             self.ending(fr, t, en)
         g = cv2.resize(self.grain[fi % len(self.grain)], (W, H), interpolation=cv2.INTER_NEAREST)[..., None]
         fr += g
+        bk = op.get("black", 0.0)
+        if bk and t < bk:
+            fr *= smooth(t / bk)
         self.watermark(fr, t)
         return (np.clip(fr, 0, 1) * 255 + 0.5).astype(np.uint8)
 
@@ -459,6 +463,16 @@ class Video:
             self.put(fr, self.credit_ar, W / 2, py0 + ph + 64, ca * a_out, IVORY)
             X2, Y2 = self.put(fr, self.credit_name, W / 2, py0 + ph + 140, ca * a_out, GOLD, glow=0.25)
             self.sweep(fr, self.credit_name, X2, Y2, ramp(t, op["t0"] + 2.2, op["t0"] + 3.2), ca)
+        # pledge line, written on after the name has landed
+        if self.pledge is not None:
+            pa = ease_out(ramp(t, op["t0"] + 2.6, op["t0"] + 3.1)) * (1 - smooth(ramp(t, op["credits_out"] - 0.6, op["credits_out"]))) * a_out
+            if pa > 0:
+                if not hasattr(self, "_ppanel"):
+                    self._ppanel = rounded_panel(int(self.pledge.ink_w + 90), 96, r=28)
+                pm, ppp = self._ppanel
+                py = py0 + ph + 262
+                blend(fr, pm, int(W / 2 - pm.shape[1] / 2 + ppp) - ppp, int(py - 66) - ppp, PANEL, 0.62 * pa)
+                self.write_on(fr, self.pledge, W / 2, py, smooth(ramp(t, op["t0"] + 2.7, op["t0"] + 4.3)), pa, GOLD, glow=0.25)
         line["y"] = saved
 
     def write_on(self, fr, sp, cx, base, p, a, color, glow=0.0):
