@@ -279,7 +279,7 @@ class Video:
             imgs = []
             for path in row:
                 g = cv2.imread(path, cv2.IMREAD_COLOR)[:, :, ::-1].astype(np.float32) / 255
-                imgs.append(cv2.resize(g, (70, 52), interpolation=cv2.INTER_AREA))
+                imgs.append(cv2.resize(g, (60, 45), interpolation=cv2.INTER_AREA))
             self.embrace_rows.append(imgs)
         self.arab_flags = []
         for path in c.get("arab_flags", []):
@@ -628,7 +628,7 @@ class Video:
             blend(fr, np.clip(rays * 0.9 + halo, 0, 1).astype(np.float32), 0, int(fy - 450), GOLD,
                   0.55 * fa * pulse, "add")
         # flags emerge from behind the Saudi flag and fly to their places (drawn before the flag)
-        tw, th, gap = 70, 52, 12
+        tw, th, gap = 60, 45, 10
         for r_i, (row, ry) in enumerate(zip(self.embrace_rows, en["rows_y"])):
             nrow = len(row)
             total = nrow * tw + (nrow - 1) * gap
@@ -676,28 +676,35 @@ class Video:
             alc = al[:reg.shape[0], :reg.shape[1], None] * fa
             lit = np.clip(rgb * 1.12 + 0.04, 0, 1)
             reg[:] = reg * (1 - alc) + lit[:reg.shape[0], :reg.shape[1]] * alc
-        # 3D gold arms: draw in, then the hands close onto each other
-        p = smooth(ramp(t, w0 + 2.3, w0 + 3.3))
-        close = smooth(ramp(t, w0 + 3.3, w0 + 4.1))
+        # big 3D gold heart drawn around the flags, from the top dip to the tip
+        p = smooth(ramp(t, w0 + 2.2, w0 + 3.6))
         if p > 0:
-            y0 = int(fy)
-            hgt = int(en["hands_y"] + 140 - y0)
-            m = embrace_art.arms_mask(cx, fy + sa.h // 2, sa.w // 2, en["hands_y"], p, close, W, y0, hgt)
+            y0 = 250
+            hgt = 840
+            m = embrace_art.heart_mask(cx, en["heart_cy"], 32.0, 26.0, p, W, y0, hgt)
             rgb, al = embrace_art.gold_metal(m)
-            sh = cv2.GaussianBlur(al, (0, 0), 12)
-            blend(fr, sh, 10, y0 + 16, DARK, 0.6)
-            gl = cv2.GaussianBlur(al, (0, 0), 14)
-            blend(fr, gl, 0, y0, GOLD, 0.35, "add")
+            blend(fr, cv2.GaussianBlur(al, (0, 0), 12), 10, y0 + 16, DARK, 0.6)
+            blend(fr, cv2.GaussianBlur(al, (0, 0), 16), 0, y0, GOLD, 0.45, "add")
             reg = fr[y0:y0 + hgt]
             reg[:] = reg * (1 - al[..., None]) + rgb * al[..., None]
-            if close > 0.98:
-                # a soft flash where the hands meet
-                fl = np.zeros((300, 300), np.float32)
-                cv2.circle(fl, (150, 150), 40, 1.0, -1)
-                fl = cv2.GaussianBlur(fl, (0, 0), 40)
-                k = math.exp(-(t - (w0 + 4.1)) / 0.5) if t > w0 + 4.1 else 1.0
-                blend(fr, fl * 2.0, int(cx - 150), int(en["hands_y"] - 150), np.array([1, 0.9, 0.65], np.float32),
-                      0.6 * k, "add")
+            done = t - (w0 + 3.6)
+            if done > 0:
+                beat = math.exp(-done / 0.45)
+                fl = np.zeros((360, 360), np.float32)
+                cv2.circle(fl, (180, 180), 50, 1.0, -1)
+                fl = cv2.GaussianBlur(fl, (0, 0), 50)
+                blend(fr, fl * 2.0, int(cx - 180), int(en["heart_cy"] + 442 - 180), np.array([1, 0.9, 0.65], np.float32),
+                      0.6 * beat, "add")
+        # Saudi flag again on top so it sits in the heart's top dip
+        if fa > 0:
+            rgb, al = sa.frame(t, amp=0.5)
+            x = int(cx - sa.w / 2)
+            y = int(fy - sa.h / 2 - sa.pad + 16 * (1 - fa))
+            h_, w_ = al.shape
+            reg = fr[y:y + h_, x:x + w_]
+            alc = al[:reg.shape[0], :reg.shape[1], None] * fa
+            lit = np.clip(rgb * 1.12 + 0.04, 0, 1)
+            reg[:] = reg * (1 - alc) + lit[:reg.shape[0], :reg.shape[1]] * alc
 
     def ending(self, fr, t, en):
         w0 = en["write0"]

@@ -167,3 +167,17 @@ def gold_metal(mask, light=(-0.55, -0.75, 0.6)):
     col = col * (0.85 + 0.15 * np.cos(yy * 18 + ny[..., None] * 3))
     col = np.clip(col + spec[..., None] * np.array([1.0, 0.97, 0.88], np.float32) * 0.9, 0, 1)
     return col.astype(np.float32), a
+
+
+def heart_mask(cx, cy, sx, sy, p, W=1080, y0=0, h=1920, width=34):
+    """Thick heart outline drawn from the top dip down both sides to the tip (p in 0..1)."""
+    t = np.linspace(0, math.pi * max(p, 0.01), max(3, int(300 * p)))
+    x = 16 * np.sin(t) ** 3
+    y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t)
+    m = np.zeros((h * SS, W * SS), np.uint8)
+    off = np.array([0, y0], np.float32)
+    for sgn in (1, -1):
+        c = np.stack([cx + sgn * x * sx, cy - y * sy], 1).astype(np.float32)
+        poly = ribbon(c, width * 0.75, width)
+        cv2.fillPoly(m, [np.round((poly - off) * SS).astype(np.int32)], 255, cv2.LINE_AA)
+    return cv2.resize(m, (W, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
