@@ -1,0 +1,304 @@
+{
+ "fonts": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/fonts",
+ "words": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/qahwa/audio/words_cut.json",
+ "feats": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/qahwa/audio/feat_cut.npz",
+ "image_dir": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/qahwa/img",
+ "audio": "/tmp/claude-0/-home-user-file-C-Users-alikh-Desktop-lara-html/ad4434f9-97d7-50d4-afc3-35bc371f5c33/scratchpad/qahwa/audio/song_cut.wav",
+ "images": {
+  "Q01": "Q01.png",
+  "Q02": "Q02.png",
+  "Q03": "Q03.png",
+  "Q04": "Q04.png",
+  "Q05": "Q05.png",
+  "Q06": "Q06.png",
+  "Q07": "Q07.png"
+ },
+ "title": "قَهْوَتِي مُرَّةٌ",
+ "label": "مَوَّالٌ حَزِين",
+ "roles": [
+  "كَلِمَات",
+  "أَلْحَان",
+  "تَوْزِيع",
+  "مُونْتَاج"
+ ],
+ "credit": "كَلِمَات وَأَلْحَان وَتَوْزِيع وَمُونْتَاج",
+ "card": {
+  "bg": "Q02",
+  "end": 7.2,
+  "fade": 1.3,
+  "label_y": 390,
+  "title_y": 700,
+  "icon_y": 930,
+  "icon_step": 200,
+  "icons": [
+   "quill",
+   "music_note",
+   "sliders",
+   "clapper"
+  ],
+  "rule_y": 1110,
+  "name_y": 1270
+ },
+ "header": {
+  "title_y": 240,
+  "credit_y": 300
+ },
+ "ending": {
+  "t0": 140.2
+ },
+ "shots": [
+  {
+   "img": "Q02",
+   "t0": 0,
+   "t1": 28.2,
+   "from": [
+    0.42,
+    0.38,
+    1.18
+   ],
+   "to": [
+    0.45,
+    0.45,
+    1.02
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q03",
+   "t0": 28.2,
+   "t1": 36.7,
+   "from": [
+    0.5,
+    0.45,
+    1.0
+   ],
+   "to": [
+    0.52,
+    0.52,
+    1.12
+   ],
+   "warm": true
+  },
+  {
+   "img": "Q04",
+   "t0": 36.7,
+   "t1": 45.2,
+   "from": [
+    0.6,
+    0.4,
+    1.15
+   ],
+   "to": [
+    0.6,
+    0.45,
+    1.0
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q01",
+   "t0": 45.2,
+   "t1": 51.6,
+   "from": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.42,
+    0.6,
+    1.15
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q05",
+   "t0": 51.6,
+   "t1": 66.2,
+   "from": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.4,
+    0.68,
+    1.2
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q06",
+   "t0": 66.2,
+   "t1": 81.2,
+   "from": [
+    0.48,
+    0.45,
+    1.0
+   ],
+   "to": [
+    0.47,
+    0.5,
+    1.18
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q07",
+   "t0": 81.2,
+   "t1": 95.5,
+   "from": [
+    0.6,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.32,
+    0.32,
+    1.25
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q02",
+   "t0": 95.5,
+   "t1": 102.3,
+   "from": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "to": [
+    0.8,
+    0.43,
+    1.3
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q03",
+   "t0": 102.3,
+   "t1": 113.5,
+   "from": [
+    0.45,
+    0.55,
+    1.15
+   ],
+   "to": [
+    0.45,
+    0.5,
+    1.0
+   ],
+   "warm": true
+  },
+  {
+   "img": "Q02",
+   "t0": 113.5,
+   "t1": 126.2,
+   "from": [
+    0.44,
+    0.3,
+    1.35
+   ],
+   "to": [
+    0.45,
+    0.36,
+    1.15
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q06",
+   "t0": 126.2,
+   "t1": 132.5,
+   "from": [
+    0.5,
+    0.4,
+    1.2
+   ],
+   "to": [
+    0.48,
+    0.48,
+    1.05
+   ],
+   "warm": false
+  },
+  {
+   "img": "Q05",
+   "t0": 132.5,
+   "t1": 149.6,
+   "from": [
+    0.4,
+    0.7,
+    1.2
+   ],
+   "to": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "warm": false
+  }
+ ],
+ "hemis": [
+  {
+   "icon": "finjan",
+   "side": "left"
+  },
+  {
+   "icon": "tear",
+   "side": "right"
+  },
+  {
+   "icon": "heart",
+   "side": "left"
+  },
+  {
+   "icon": "door",
+   "side": "right"
+  },
+  {
+   "icon": "finjan",
+   "side": "left"
+  },
+  {
+   "icon": "lantern",
+   "side": "right"
+  },
+  {
+   "icon": "finjan",
+   "side": "left",
+   "y": 1610
+  },
+  {
+   "icon": "tear",
+   "side": "right",
+   "y": 1610
+  },
+  {
+   "icon": "music_note",
+   "side": "left"
+  },
+  {
+   "icon": "sparkles",
+   "side": "right"
+  },
+  {
+   "icon": "boat",
+   "side": "left"
+  },
+  {
+   "icon": "heart",
+   "side": "right"
+  },
+  {
+   "icon": "finjan",
+   "side": "left"
+  },
+  {
+   "icon": "tear",
+   "side": "right",
+   "y": 1610
+  }
+ ]
+}

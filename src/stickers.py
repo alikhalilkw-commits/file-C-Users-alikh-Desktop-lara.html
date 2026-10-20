@@ -167,7 +167,67 @@ def candle():
     return [body, top, wick, fl]
 
 
-CATALOGUE = dict(phone=phone, ring=ring, candle=candle, quill=quill, crescent=crescent, heart=heart, heart_arrow=heart_arrow, sparkles=sparkles, star=star,
+def finjan():
+    cup = [(-0.62, -0.1), (-0.5, 0.42), (-0.28, 0.66), (0.28, 0.66), (0.5, 0.42), (0.62, -0.1), (-0.62, -0.1)]
+    saucer = [(-0.9, 0.8), (0.9, 0.8)]
+    steam = [[(x, -0.25), (x + 0.1, -0.45), (x - 0.06, -0.65), (x + 0.06, -0.9)] for x in (-0.25, 0.05, 0.32)]
+    return [cup, saucer] + steam
+
+
+def dallah():
+    body = [(-0.15, -0.55), (-0.32, -0.2), (-0.42, 0.35), (-0.36, 0.7), (0.36, 0.7), (0.42, 0.35), (0.32, -0.2), (0.15, -0.55)]
+    lid = _arc(0, -0.55, 0.2, math.radians(180), math.radians(360), 14) + [(0, -0.92)]
+    spout = [(-0.36, 0.1), (-0.65, -0.15), (-0.95, -0.55)]
+    handle = _arc(0.42, 0.1, 0.3, math.radians(-80), math.radians(80), 16)
+    base = [(-0.45, 0.85), (0.45, 0.85)]
+    return [body, lid, spout, handle, base]
+
+
+def door():
+    arch = [(-0.55, 0.95), (-0.55, -0.3)] + _arc(0, -0.3, 0.55, math.radians(180), math.radians(360), 24) + [(0.55, 0.95)]
+    mid = [(0, -0.85), (0, 0.95)]
+    knobs = [_arc(-0.12, 0.2, 0.06, 0, 2 * math.pi, 12), _arc(0.12, 0.2, 0.06, 0, 2 * math.pi, 12)]
+    return [arch, mid] + knobs
+
+
+def lantern():
+    ring = _arc(0, -0.85, 0.1, 0, 2 * math.pi, 12)
+    cap = [(-0.3, -0.5), (0, -0.75), (0.3, -0.5), (-0.3, -0.5)]
+    body = [(-0.3, -0.5), (-0.38, 0.45), (0.38, 0.45), (0.3, -0.5)]
+    base = [(-0.38, 0.45), (0, 0.8), (0.38, 0.45)]
+    fl = [(0, -0.25), (0.1, -0.02), (0, 0.15), (-0.1, -0.02), (0, -0.25)]
+    return [ring, cap, body, base, fl]
+
+
+def sliders():
+    out = []
+    for x, k in ((-0.55, 0.3), (0, -0.35), (0.55, 0.1)):
+        out.append([(x, -0.9), (x, 0.9)])
+        out.append([(x - 0.18, k), (x + 0.18, k)])
+    return out
+
+
+def clapper():
+    box = [(-0.8, -0.3), (0.8, -0.3), (0.8, 0.8), (-0.8, 0.8), (-0.8, -0.3)]
+    top = [(-0.8, -0.3), (-0.75, -0.7), (0.78, -0.92), (0.8, -0.3)]
+    play = [(-0.2, 0.05), (0.3, 0.25), (-0.2, 0.45), (-0.2, 0.05)]
+    return [box, top, play]
+
+
+def boat():
+    hull = [(-0.95, 0.3), (-0.7, 0.65), (0.7, 0.65), (0.95, 0.3), (-0.95, 0.3)]
+    mast = [(0, 0.3), (0, -0.95)]
+    sail = [(0.05, -0.85), (0.6, 0.15), (0.05, 0.15)]
+    wave = [(-0.9 + 0.3 * i, 0.85 + 0.06 * (-1) ** i) for i in range(7)]
+    return [hull, mast, sail, wave]
+
+
+def tear():
+    d = [(0, -0.9)] + _arc(0, 0.25, 0.48, math.radians(-30), math.radians(210), 30) + [(0, -0.9)]
+    return [d, _arc(0, 0.25, 0.25, math.radians(100), math.radians(170), 8)]
+
+
+CATALOGUE = dict(finjan=finjan, dallah=dallah, door=door, lantern=lantern, sliders=sliders, clapper=clapper, boat=boat, tear=tear, phone=phone, ring=ring, candle=candle, quill=quill, crescent=crescent, heart=heart, heart_arrow=heart_arrow, sparkles=sparkles, star=star,
                  sun=sun, flower=flower, rose=rose, drops=drops, music_note=music_note, strings=strings,
                  eye=eye, infinity=infinity, heartbeat=heartbeat)
 
