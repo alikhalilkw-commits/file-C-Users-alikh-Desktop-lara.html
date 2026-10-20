@@ -40,8 +40,9 @@
   "name_y": 1270
  },
  "header": {
-  "title_y": 240,
-  "credit_y": 300
+  "title_y": 235,
+  "credit_y": 292,
+  "name_y": 342
  },
  "ending": {
   "t0": 140.2
@@ -300,5 +301,7 @@
    "side": "right",
    "y": 1610
   }
- ]
+ ],
+ "caption_font": "marhey",
+ "caption_size": 92
 }

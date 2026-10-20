@@ -54,8 +54,9 @@ class Video:
     def font(self, name, size):
         key = (name, size)
         if key not in self.fonts.cache:
-            if name == "kufi":
-                f = ImageFont.truetype(f"{self.cfg['fonts']}/ReemKufi.ttf", size, layout_engine=ImageFont.Layout.RAQM)
+            if name in ("kufi", "marhey"):
+                fn = "ReemKufi" if name == "kufi" else "Marhey"
+                f = ImageFont.truetype(f"{self.cfg['fonts']}/{fn}.ttf", size, layout_engine=ImageFont.Layout.RAQM)
                 f.set_variation_by_axes([700])
                 self.fonts.cache[key] = f
             else:
@@ -77,57 +78,63 @@ class Video:
         if cur:
             groups.append(cur)
         meta = self.cfg["hemis"]
+        size = self.cfg.get("caption_size", 92)
+        font = self.font(self.cfg.get("caption_font", "marhey"), size)
+        space = font.getlength(" ") * 1.25
+        maxw = W - 2 * MARGIN
+        # one line only: a hemistich that does not fit is shown in consecutive word groups
+        chunks = []
+        for gi, ws in enumerate(groups):
+            cur, cw = [], 0.0
+            for w in ws:
+                ww = R.Sprite(w["text"].rstrip(SPLIT), font).ink_w
+                if cur and cw + space + ww > maxw:
+                    chunks.append((gi, cur))
+                    cur, cw = [], 0.0
+                cw = ww if not cur else cw + space + ww
+                cur.append(w)
+            chunks.append((gi, cur))
         self.hemis = []
-        for i, ws in enumerate(groups):
-            m = meta[i] if i < len(meta) else {}
-            nxt = groups[i + 1][0]["start"] if i + 1 < len(groups) else self.duration
+        for i, (gi, ws) in enumerate(chunks):
+            m = meta[gi] if gi < len(meta) else {}
+            first = i == 0 or chunks[i - 1][0] != gi
+            nxt = chunks[i + 1][1][0]["start"] if i + 1 < len(chunks) else self.duration
+            same = i + 1 < len(chunks) and chunks[i + 1][0] == gi
             start, end = ws[0]["start"], ws[-1]["end"]
-            h = dict(words=ws, start=start, end=end, t_out=min(nxt - 0.35, end + m.get("hold", 1.6)),
-                     icon=m.get("icon"), side=m.get("side", "left"), y=m.get("y", 1500))
-            self.layout(h, m.get("size", 84))
+            t_out = nxt - 0.12 if same else min(nxt - 0.35, end + m.get("hold", 1.6))
+            h = dict(words=ws, start=start, end=end, t_out=t_out, icon=m.get("icon") if first else None,
+                     side=m.get("side", "left"), y=m.get("y", 1500))
+            self.layout(h, size)
             self.hemis.append(h)
 
     def layout(self, h, size):
         maxw = W - 2 * MARGIN
         while True:
-            font = self.font("kufi", size)
-            texts = [w["text"].rstrip(SPLIT) for w in h["words"]]
-            sprites = [R.Sprite(t, font) for t in texts]
+            font = self.font(self.cfg.get("caption_font", "marhey"), size)
+            sprites = [R.Sprite(w["text"].rstrip(SPLIT), font) for w in h["words"]]
             space = font.getlength(" ") * 1.25
             widths = [s.ink_w for s in sprites]
             total = sum(widths) + space * (len(sprites) - 1)
-            rows = [list(range(len(sprites)))]
-            if total > maxw and len(sprites) > 1:
-                best = None
-                for k in range(1, len(sprites)):
-                    a = sum(widths[:k]) + space * (k - 1)
-                    b = sum(widths[k:]) + space * (len(sprites) - k - 1)
-                    if best is None or max(a, b) < best[0]:
-                        best = (max(a, b), k)
-                rows = [list(range(best[1])), list(range(best[1], len(sprites)))]
-            roww = [sum(widths[i] for i in r) + space * (len(r) - 1) for r in rows]
-            if max(roww) <= maxw or size <= 56:
+            if total <= maxw or size <= 56:
                 break
             size -= 4
         asc = max(s.base - s.pad for s in sprites)
         desc = max(s.h - s.base - s.pad for s in sprites)
         row_h = int(asc + desc + size * 0.22)
         place = {}
-        for r, idxs in enumerate(rows):
-            x = W / 2 + roww[r] / 2
-            for i in idxs:
-                x -= widths[i]
-                place[i] = (x, r)
-                x -= space
-        h.update(sprites=sprites, place=place, rows=len(rows), row_h=row_h, asc=asc, width=max(roww), size=size)
-        # soft dark scrim behind the text block (no box edges)
-        sw, sh = int(max(roww) + 160), int(row_h * len(rows) + 120)
+        x = W / 2 + total / 2
+        for i in range(len(sprites)):
+            x -= widths[i]
+            place[i] = (x, 0)
+            x -= space
+        h.update(sprites=sprites, place=place, rows=1, row_h=row_h, asc=asc, width=total, size=size)
+        sw, sh = int(total + 160), int(row_h + 120)
         m = np.zeros((sh + 120, sw + 120), np.float32)
         cv2.ellipse(m, ((sw + 120) // 2, (sh + 120) // 2), (sw // 2, sh // 2), 0, 0, 360, 1.0, -1)
         h["scrim"] = cv2.GaussianBlur(m, (0, 0), 38)
 
     def draw_hemi(self, fr, t, h):
-        a = smooth(ramp(t, h["start"] - 0.35, h["start"] - 0.05)) * (1 - smooth(ramp(t, h["t_out"] - 0.35, h["t_out"])))
+        a = smooth(ramp(t, h["start"] - 0.3, h["start"] - 0.05)) * (1 - smooth(ramp(t, h["t_out"] - 0.25, h["t_out"])))
         if a <= 0.003:
             return
         top = h["y"] - (h["rows"] * h["row_h"]) / 2
@@ -165,13 +172,12 @@ class Video:
         c = self.cfg
         f = self.font
         self.c_label = R.Sprite(c["label"], f("messiri", 46))
-        self.c_title = R.Sprite(c["title"], f("kufi", 168))
+        self.c_title = R.Sprite(c["title"], f("marhey", 160))
         self.c_roles = [R.Sprite(r, f("messiri", 38)) for r in c["roles"]]
         self.c_name = R.Sprite("AHMED", f("cinzel", 118), tracking=26, rtl=False)
-        self.h_title = R.Sprite(c["title"], f("kufi", 62))
+        self.h_title = R.Sprite(c["title"], f("marhey", 60))
         self.h_credit = R.Sprite(c["credit"], f("messiri", 30))
-        self.h_name = R.Sprite("AHMED", f("cinzel", 28), tracking=3, rtl=False)
-        self.h_dot = R.Sprite("·", f("messiri", 30))
+        self.h_name = R.Sprite("AHMED", f("cinzel", 32), tracking=8, rtl=False)
 
     def put(self, fr, sp, cx, base, a, color, glow=0.0, x_left=None):
         X = (int(round(cx - sp.adv / 2)) - sp.pad) if x_left is None else int(x_left) - sp.ink_l
@@ -279,16 +285,8 @@ class Video:
             return
         hd = self.cfg["header"]
         self.put(fr, self.h_title, W / 2, hd["title_y"], a, CREAM, glow=0.3)
-        # visual order (RTL paragraph): AHMED · <arabic credit>
-        gap = 12
-        total = self.h_name.adv + gap + self.h_dot.ink_w + gap + self.h_credit.ink_w
-        x = W / 2 - total / 2
-        y = hd["credit_y"]
-        self.put(fr, self.h_name, 0, y, a, IVORY, x_left=x)
-        x += self.h_name.adv + gap
-        self.put(fr, self.h_dot, 0, y, a, IVORY, x_left=x)
-        x += self.h_dot.ink_w + gap
-        self.put(fr, self.h_credit, 0, y, a, IVORY, x_left=x)
+        self.put(fr, self.h_credit, W / 2, hd["credit_y"], a, IVORY)
+        self.put(fr, self.h_name, W / 2, hd["name_y"], a, GOLD, glow=0.2)
 
     # ---------------------------------------------------------------- scenes
     def scene(self, sh, t):
